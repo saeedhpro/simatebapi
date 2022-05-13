@@ -18,6 +18,7 @@ var (
 
 func Init() {
 	username := env.GetEnv("USERNAME")
+	fmt.Println(username)
 	password := env.GetEnv("PASSWORD")
 	host := env.GetEnv("HOST")
 	port, _ := strconv.Atoi(env.GetEnv("DBPORT"))
