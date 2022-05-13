@@ -1,0 +1,113 @@
+package http
+
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/saeedhpro/apisimateb/controller/adminController"
+	"github.com/saeedhpro/apisimateb/controller/appointmentController"
+	"github.com/saeedhpro/apisimateb/controller/authController"
+	"github.com/saeedhpro/apisimateb/controller/caseTypeController"
+	"github.com/saeedhpro/apisimateb/controller/cityController"
+	"github.com/saeedhpro/apisimateb/controller/countyController"
+	"github.com/saeedhpro/apisimateb/controller/fileController"
+	"github.com/saeedhpro/apisimateb/controller/messageController"
+	"github.com/saeedhpro/apisimateb/controller/organizationController"
+	"github.com/saeedhpro/apisimateb/controller/provinceController"
+	"github.com/saeedhpro/apisimateb/controller/userController"
+	"github.com/saeedhpro/apisimateb/middleware"
+)
+
+func Run(Port string) {
+	engine := gin.Default()
+	engine.Use(gin.Recovery())
+	engine.Static("/images", "./images")
+	engine.Static("/res", "./res")
+	engine.Use(middleware.CORSMiddleware)
+	v1 := engine.Group("api/v1")
+
+	authCont := authController.NewAuthController()
+	organizationCont := organizationController.NewOOrganizationController()
+	userCont := userController.NewUserController()
+	appointmentCont := appointmentController.NewAppointmentController()
+	fileCont := fileController.NewFileController()
+	provinceCont := provinceController.NewProvinceController()
+	countyCont := countyController.NewCountyController()
+	cityCont := cityController.NewCityController()
+	caseCont := caseTypeController.NewCaseTypeController()
+	adminCont := adminController.NewAdminController()
+	messageCont := messageController.NewMessageController()
+
+	v1.POST("/auth/login", authCont.Login)
+	v1.GET("/own", middleware.GinJwtAuth(userCont.Own, true, false))
+
+	organizations := v1.Group("/organizations")
+	users := v1.Group("/users")
+	appointments := v1.Group("/appointments")
+	files := v1.Group("/files")
+	provinces := v1.Group("/provinces")
+	counties := v1.Group("/counties")
+	cities := v1.Group("/cities")
+	cases := v1.Group("/cases")
+	admin := v1.Group("/admin")
+	messages := v1.Group("/messages")
+
+	{
+		organizations.GET("/users", middleware.GinJwtAuth(userCont.GetOrganizationUsersList, true, false))
+		organizations.GET("/appointments", middleware.GinJwtAuth(appointmentCont.GetOrganizationAppointmentList, true, false))
+		organizations.GET("/messages", middleware.GinJwtAuth(messageCont.GetOrganizationMessages, true, false))
+		organizations.GET("/cases", middleware.GinJwtAuth(caseCont.GetOrganizationCaseTypeList, true, false))
+		organizations.GET("/:id", middleware.GinJwtAuth(organizationCont.Get, true, false))
+	}
+	{
+		v1.POST("/users", middleware.GinJwtAuth(userCont.CreateUser, true, false))
+		users.POST("/delete", middleware.GinJwtAuth(userCont.DeleteUsers, true, false))
+		users.GET("/:id", middleware.GinJwtAuth(userCont.GetUser, true, false))
+		users.DELETE("/:id", middleware.GinJwtAuth(userCont.DeleteUser, true, false))
+		users.GET("/:id/appointments", middleware.GinJwtAuth(appointmentCont.GetUserAppointmentList, true, false))
+	}
+	{
+		appointments.POST("/", middleware.GinJwtAuth(appointmentCont.CreateAppointment, true, false))
+		appointments.GET("/que", middleware.GinJwtAuth(appointmentCont.GetQueList, true, false))
+		appointments.GET("/search", middleware.GinJwtAuth(appointmentCont.FilterOrganizationAppointment, true, false))
+		appointments.GET("/:id", middleware.GinJwtAuth(appointmentCont.GetAppointment, true, false))
+	}
+	{
+		files.GET("/:id", middleware.GinJwtAuth(fileCont.GetUserFileList, true, false))
+		files.DELETE("/:id", middleware.GinJwtAuth(fileCont.DeleteFile, true, false))
+	}
+	{
+		provinces.GET("", middleware.GinJwtAuth(provinceCont.GetProvinceList, true, false))
+		provinces.GET("/:id", middleware.GinJwtAuth(provinceCont.GetProvince, true, false))
+		provinces.GET("/:id/counties", middleware.GinJwtAuth(countyCont.GetCountyList, true, false))
+	}
+	{
+		counties.GET("/:id", middleware.GinJwtAuth(countyCont.GetCounty, true, false))
+		counties.GET("/:id/cities", middleware.GinJwtAuth(cityCont.GetCityList, true, false))
+	}
+	{
+		cities.GET("/:id", middleware.GinJwtAuth(cityCont.GetCity, true, false))
+	}
+	{
+		cases.GET("/:id", middleware.GinJwtAuth(caseCont.Get, true, false))
+	}
+
+	{
+		admin.GET("/users/online", middleware.GinJwtAuth(adminCont.LastOnlineUsers, true, false))
+		admin.GET("/users", middleware.GinJwtAuth(adminCont.GetUsers, true, false))
+		admin.GET("/patients/online", middleware.GinJwtAuth(adminCont.LastOnlinePatients, true, false))
+		admin.GET("/organizations", middleware.GinJwtAuth(adminCont.GetOrganizations, true, false))
+		admin.GET("/groups", middleware.GinJwtAuth(adminCont.GetUserGroups, true, false))
+		admin.GET("/messages", middleware.GinJwtAuth(adminCont.GetMessages, true, false))
+		admin.POST("/messages/delete", middleware.GinJwtAuth(adminCont.DeleteMessages, true, false))
+		admin.GET("/holidays", middleware.GinJwtAuth(adminCont.GetHolidays, true, false))
+		admin.POST("/holidays", middleware.GinJwtAuth(adminCont.CreateHoliday, true, false))
+		admin.PUT("/holidays/:id", middleware.GinJwtAuth(adminCont.UpdateHoliday, true, false))
+		admin.DELETE("/holidays/:id", middleware.GinJwtAuth(adminCont.DeleteHoliday, true, false))
+	}
+
+	{
+		messages.POST("/delete", middleware.GinJwtAuth(messageCont.DeleteMessages, true, false))
+	}
+
+	fmt.Println(engine.Run(fmt.Sprintf(":%s", Port)))
+}
