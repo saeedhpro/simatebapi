@@ -125,7 +125,11 @@ func GetPaginatedUserListBy(conditions *models.UserModel, q string, page int, li
 
 func GetUserByID(ID uint64) (*models.UserModel, error) {
 	user := models.UserModel{ID: ID}
-	err := repository.DB.MySQL.Preload("Organization").Preload("Staff").Preload("UserGroup").First(&user, &user).Error
+	err := repository.DB.MySQL.
+		Preload("Organization").
+		Preload("Staff").
+		Preload("UserGroup").
+		First(&user, &user).Error
 	if err != nil {
 		return nil, err
 	}

@@ -16,6 +16,18 @@ func GetHolidayBy(conditions *models.HolidayModel) (*models.HolidayModel, error)
 	return &holiday, nil
 }
 
+func GetHolidayByID(ID uint64) (*models.HolidayModel, error) {
+	var holiday models.HolidayModel
+	holiday.ID = ID
+	err := repository.DB.MySQL.
+		Preload("Organization").
+		First(&holiday, &holiday).Error
+	if err != nil {
+		return nil, err
+	}
+	return &holiday, nil
+}
+
 func GetHolidayListBy(conditions *models.HolidayModel, q string, startDate string, endDate string) ([]models.HolidayModel, error) {
 	holidays := []models.HolidayModel{}
 	query := repository.DB.MySQL

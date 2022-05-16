@@ -2,6 +2,7 @@ package caseTypeRepository
 
 import (
 	"github.com/saeedhpro/apisimateb/domain/models"
+	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers/pagination"
 	"github.com/saeedhpro/apisimateb/repository"
 )
@@ -35,11 +36,10 @@ func GetCaseTypeListBy(conditions *models.CaseType) ([]models.CaseType, error) {
 	return caseTypes, nil
 }
 
-
 func GetPaginatedCaseTypeListBy(conditions *models.CaseType, page int, limit int) (pagination.Pagination, error) {
 	caseTypes := []models.CaseType{}
 	paginate := pagination.Pagination{
-		Page: page,
+		Page:  page,
 		Limit: limit,
 	}
 	var count int64 = 0
@@ -50,4 +50,42 @@ func GetPaginatedCaseTypeListBy(conditions *models.CaseType, page int, limit int
 	}
 	paginate.Data = caseTypes
 	return paginate, nil
+}
+
+func CreateCaseType(request *requests.CreateCaseTypeRequest) error {
+	caseType := models.CaseType{
+		OrganizationID: request.OrganizationID,
+		Name:           request.Name,
+		Duration:       request.Duration,
+		IsLimited:      request.IsLimited,
+		Limitation:     request.Limitation,
+	}
+	err := repository.DB.MySQL.Create(caseType).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateCaseType(id uint64, request *requests.CreateCaseTypeRequest) error {
+	caseType := models.CaseType{
+		ID:             id,
+		IsLimited:      request.IsLimited,
+		Limitation:     request.Limitation,
+		Duration:       request.Duration,
+		OrganizationID: request.OrganizationID,
+		Name:           request.Name,
+	}
+	err := repository.DB.MySQL.
+		Model(&caseType).
+		Updates(caseType).
+		Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteCaseType(caseType *models.CaseType) error {
+	return repository.DB.MySQL.Delete(caseType).Error
 }

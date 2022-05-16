@@ -10,9 +10,11 @@ import (
 	"github.com/saeedhpro/apisimateb/controller/cityController"
 	"github.com/saeedhpro/apisimateb/controller/countyController"
 	"github.com/saeedhpro/apisimateb/controller/fileController"
+	"github.com/saeedhpro/apisimateb/controller/medicalHistoryController"
 	"github.com/saeedhpro/apisimateb/controller/messageController"
 	"github.com/saeedhpro/apisimateb/controller/organizationController"
 	"github.com/saeedhpro/apisimateb/controller/provinceController"
+	"github.com/saeedhpro/apisimateb/controller/scheduleController"
 	"github.com/saeedhpro/apisimateb/controller/userController"
 	"github.com/saeedhpro/apisimateb/middleware"
 )
@@ -36,6 +38,8 @@ func Run(Port string) {
 	caseCont := caseTypeController.NewCaseTypeController()
 	adminCont := adminController.NewAdminController()
 	messageCont := messageController.NewMessageController()
+	medicalHistoryCont := medicalHistoryController.NewMedicalHistoryController()
+	scheduleCont := scheduleController.NewScheduleController()
 
 	v1.POST("/auth/login", authCont.Login)
 	v1.GET("/own", middleware.GinJwtAuth(userCont.Own, true, false))
@@ -56,7 +60,13 @@ func Run(Port string) {
 		organizations.GET("/appointments", middleware.GinJwtAuth(appointmentCont.GetOrganizationAppointmentList, true, false))
 		organizations.GET("/messages", middleware.GinJwtAuth(messageCont.GetOrganizationMessages, true, false))
 		organizations.GET("/cases", middleware.GinJwtAuth(caseCont.GetOrganizationCaseTypeList, true, false))
+		organizations.POST("/cases", middleware.GinJwtAuth(caseCont.CreateCaseType, true, false))
+		organizations.GET("/schedules", middleware.GinJwtAuth(scheduleCont.GetOrganizationScheduleList, true, false))
 		organizations.GET("/:id", middleware.GinJwtAuth(organizationCont.Get, true, false))
+		organizations.GET("/holidays", middleware.GinJwtAuth(organizationCont.GetHolidays, true, false))
+		organizations.POST("/holidays", middleware.GinJwtAuth(organizationCont.CreateHoliday, true, false))
+		organizations.PUT("/holidays/:id", middleware.GinJwtAuth(organizationCont.UpdateHoliday, true, false))
+		organizations.DELETE("/holidays/:id", middleware.GinJwtAuth(organizationCont.DeleteHoliday, true, false))
 	}
 	{
 		v1.POST("/users", middleware.GinJwtAuth(userCont.CreateUser, true, false))
@@ -64,6 +74,8 @@ func Run(Port string) {
 		users.GET("/:id", middleware.GinJwtAuth(userCont.GetUser, true, false))
 		users.DELETE("/:id", middleware.GinJwtAuth(userCont.DeleteUser, true, false))
 		users.GET("/:id/appointments", middleware.GinJwtAuth(appointmentCont.GetUserAppointmentList, true, false))
+		users.GET("/:id/histories", middleware.GinJwtAuth(medicalHistoryCont.GetUserMedicalHistory, true, false))
+		users.POST("/:id/histories", middleware.GinJwtAuth(medicalHistoryCont.CreateUserMedicalHistory, true, false))
 	}
 	{
 		appointments.POST("/", middleware.GinJwtAuth(appointmentCont.CreateAppointment, true, false))
@@ -89,6 +101,8 @@ func Run(Port string) {
 	}
 	{
 		cases.GET("/:id", middleware.GinJwtAuth(caseCont.Get, true, false))
+		cases.PUT("/:id", middleware.GinJwtAuth(caseCont.UpdateCaseType, true, false))
+		cases.DELETE("/:id", middleware.GinJwtAuth(caseCont.DeleteCaseType, true, false))
 	}
 
 	{
