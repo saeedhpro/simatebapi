@@ -58,6 +58,7 @@ func Run(Port string) {
 	{
 		organizations.GET("/users", middleware.GinJwtAuth(userCont.GetOrganizationUsersList, true, false))
 		organizations.GET("/appointments", middleware.GinJwtAuth(appointmentCont.GetOrganizationAppointmentList, true, false))
+		organizations.POST("/appointments", middleware.GinJwtAuth(appointmentCont.CreateAppointment, true, false))
 		organizations.GET("/messages", middleware.GinJwtAuth(messageCont.GetOrganizationMessages, true, false))
 		organizations.GET("/cases", middleware.GinJwtAuth(caseCont.GetOrganizationCaseTypeList, true, false))
 		organizations.POST("/cases", middleware.GinJwtAuth(caseCont.CreateCaseType, true, false))
@@ -78,10 +79,12 @@ func Run(Port string) {
 		users.POST("/:id/histories", middleware.GinJwtAuth(medicalHistoryCont.CreateUserMedicalHistory, true, false))
 	}
 	{
-		appointments.POST("/", middleware.GinJwtAuth(appointmentCont.CreateAppointment, true, false))
 		appointments.GET("/que", middleware.GinJwtAuth(appointmentCont.GetQueList, true, false))
 		appointments.GET("/search", middleware.GinJwtAuth(appointmentCont.FilterOrganizationAppointment, true, false))
 		appointments.GET("/:id", middleware.GinJwtAuth(appointmentCont.GetAppointment, true, false))
+		appointments.POST("/:id/accept", middleware.GinJwtAuth(appointmentCont.AcceptAppointment, true, false))
+		appointments.POST("/:id/cancel", middleware.GinJwtAuth(appointmentCont.CancelAppointment, true, false))
+		appointments.POST("/:id/reserve", middleware.GinJwtAuth(appointmentCont.ReserveAppointment, true, false))
 	}
 	{
 		files.GET("/:id", middleware.GinJwtAuth(fileCont.GetUserFileList, true, false))

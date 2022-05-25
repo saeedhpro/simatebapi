@@ -17,16 +17,90 @@ func GetAppointmentBy(conditions *models.AppointmentModel) (*models.AppointmentM
 	return &appointment, nil
 }
 
-func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end string) ([]models.AppointmentModel, error) {
+func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool) ([]models.AppointmentModel, error) {
 	appointments := []models.AppointmentModel{}
-	err := repository.DB.MySQL.Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User").Find(&appointments, &conditions).Error
+	query := repository.DB.MySQL.
+		Preload("Organization").
+		Preload("Photography").
+		Preload("Radiology").
+		Preload("Staff").
+		Preload("User")
+	fmt.Println(isDoctor)
+	if !isDoctor {
+		if conditions.Photography != nil {
+			query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
+		} else if conditions.Radiology != nil {
+			query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
+		} else if conditions.Laboratory != nil {
+			query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+		}
+	} else {
+		if start != "" {
+			query = query.Where("start_at >= ?", fmt.Sprintf("%s 00:00:00", start))
+		}
+		if end != "" {
+			query = query.Where("start_at < ?", fmt.Sprintf("%s 23:59:59", end))
+		}
+	}
+	err := query.
+		Find(&appointments, &conditions).Error
 	if err != nil {
 		return appointments, err
 	}
 	return appointments, nil
 }
 
-func FilterOrganizationAppointment(organizationID uint64, status []string, q string, start string, end string, page int, limit int) (pagination.Pagination, error) {
+func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool, page int, limit int) (pagination.Pagination, error) {
+	appointments := []models.AppointmentModel{}
+	paginate := pagination.Pagination{
+		Page:  page,
+		Limit: limit,
+	}
+	var count int64 = 0
+	query := repository.DB.MySQL
+	if !isDoctor {
+		if conditions.Photography != nil {
+			query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
+		} else if conditions.Radiology != nil {
+			query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
+		} else if conditions.Laboratory != nil {
+			query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+		}
+	} else {
+		if start != "" {
+			query = query.Where("start_at >= ?", fmt.Sprintf("%s 00:00:00", start))
+		}
+		if end != "" {
+			query = query.Where("start_at < ?", fmt.Sprintf("%s 23:59:59", end))
+		}
+	}
+	query.Find(&appointments, &conditions).Count(&count)
+	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User")
+	if !isDoctor {
+		if conditions.Photography != nil {
+			query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
+		} else if conditions.Radiology != nil {
+			query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
+		} else if conditions.Laboratory != nil {
+			query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+		}
+	} else {
+		if start != "" {
+			query = query.Where("start_at >= ?", fmt.Sprintf("%s 00:00:00", start))
+		}
+		if end != "" {
+			query = query.Where("start_at < ?", fmt.Sprintf("%s 23:59:59", end))
+		}
+	}
+	err := query.Find(&appointments, &conditions).Error
+	if err != nil {
+		return paginate, err
+	}
+	paginate.Data = appointments
+	return paginate, nil
+}
+
+func FilterOrganizationAppointment(organizationID uint64, status []string, q string, start string, end string, isDoctor bool, page int, limit int) (pagination.Pagination, error) {
 	appointments := []models.AppointmentModel{}
 	paginate := pagination.Pagination{
 		Page:  page,
@@ -38,13 +112,19 @@ func FilterOrganizationAppointment(organizationID uint64, status []string, q str
 		query = query.Where("status IN ?", status)
 	}
 	if q != "" {
-		query = query.Joins("left join (select id, fname, lname from user) user on appointment.user_id = user.id").Where(repository.DB.MySQL.Where("fname LIKE ?", "%"+q+"%").Or("lname LIKE ?", "%"+q+"%"))
+		query = query.
+			Joins("left join (select id, fname, lname from user) user on appointment.user_id = user.id").
+			Where(repository.DB.MySQL.
+				Where("fname LIKE ?", "%"+q+"%").
+				Or("lname LIKE ?", "%"+q+"%"))
 	}
 	if start != "" {
-		query = query.Where("start_at >= ?", fmt.Sprintf("%s 00:00:00", start))
+		query = query.
+			Where("start_at >= ?", fmt.Sprintf("%s 00:00:00", start))
 	}
 	if end != "" {
-		query = query.Where("start_at < ?", fmt.Sprintf("%s 23:59:59", end))
+		query = query.
+			Where("start_at < ?", fmt.Sprintf("%s 23:59:59", end))
 	}
 	var count int64 = 0
 	query.Find(&appointments).Count(&count)
@@ -57,40 +137,17 @@ func FilterOrganizationAppointment(organizationID uint64, status []string, q str
 	return paginate, nil
 }
 
-func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start string, end string, page int, limit int) (pagination.Pagination, error) {
-	appointments := []models.AppointmentModel{}
-	paginate := pagination.Pagination{
-		Page:  page,
-		Limit: limit,
-	}
-	var count int64 = 0
-	query := repository.DB.MySQL
-	if start != "" {
-		query = query.Where("start_at >= ?", fmt.Sprintf("%s 00:00:00", start))
-	}
-	if end != "" {
-		query = query.Where("start_at < ?", fmt.Sprintf("%s 23:59:59", end))
-	}
-	query.Find(&appointments, &conditions).Count(&count)
-	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User")
-	if start != "" {
-		query = query.Where("start_at >= ?", fmt.Sprintf("%s 00:00:00", start))
-	}
-	if end != "" {
-		query = query.Where("start_at < ?", fmt.Sprintf("%s 23:59:59", end))
-	}
-	err := query.Find(&appointments, &conditions).Error
-	if err != nil {
-		return paginate, err
-	}
-	paginate.Data = appointments
-	return paginate, nil
-}
-
 func GetAppointmentByID(ID uint64) (*models.AppointmentModel, error) {
 	var appointment models.AppointmentModel
 	appointment.ID = ID
-	err := repository.DB.MySQL.Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User").First(&appointment, &appointment).Error
+	err := repository.DB.MySQL.
+		Preload("Organization").
+		Preload("Photography").
+		Preload("Radiology").
+		Preload("Staff").
+		Preload("User").
+		First(&appointment, &appointment).
+		Error
 	if err != nil {
 		return nil, err
 	}
@@ -130,4 +187,43 @@ func CreateAppointment(request *requests.AppointmentCreateRequest, staffID uint6
 		return nil, err
 	}
 	return &appointment, nil
+}
+
+func AcceptAppointment(appointment *models.AppointmentModel) (bool, error) {
+	appointment.Status = 2
+	appointment.Organization = nil
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func CancelAppointment(appointment *models.AppointmentModel) (bool, error) {
+	appointment.Status = 3
+	appointment.Organization = nil
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func ReserveAppointment(appointment *models.AppointmentModel) (bool, error) {
+	appointment.Status = 1
+	appointment.Organization = nil
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

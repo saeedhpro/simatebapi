@@ -54,7 +54,10 @@ func (auth AuthControllerStruct) Login(c *gin.Context) {
 		})
 		return
 	}
+	Organization := user.Organization
+	user.Organization = nil
 	repository.DB.MySQL.Model(&user).Update("last_login", time.Now())
+	user.Organization = Organization
 	response, _ := token.GenerateToken(user)
 	c.JSON(200, response)
 	return

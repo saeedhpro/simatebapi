@@ -39,3 +39,7 @@ type OrganizationModel struct {
 func (OrganizationModel) TableName() string {
 	return "organization"
 }
+
+func (o *OrganizationModel) IsDoctor() bool {
+	return o.ProfessionID != 1 && o.ProfessionID != 2 && o.ProfessionID != 3
+}

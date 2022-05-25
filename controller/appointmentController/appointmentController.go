@@ -2,6 +2,7 @@ package appointmentController
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
@@ -22,6 +23,9 @@ type AppointmentControllerInterface interface {
 	GetOrganizationAppointmentList(c *gin.Context)
 	FilterOrganizationAppointment(c *gin.Context)
 	GetQueList(c *gin.Context)
+	AcceptAppointment(c *gin.Context)
+	CancelAppointment(c *gin.Context)
+	ReserveAppointment(c *gin.Context)
 }
 
 type AppointmentControllerStruct struct {
@@ -69,17 +73,36 @@ func (u *AppointmentControllerStruct) GetOrganizationAppointmentList(c *gin.Cont
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	start := c.Query("start")
 	end := c.Query("end")
-	organizationID := token.GetStaffUser(c).OrganizationID
-	filter := models.AppointmentModel{OrganizationID: organizationID}
+	staff := token.GetStaffUser(c)
+	staffOrg, err := organizationRepository.GetOrganizationByID(staff.OrganizationID)
+	if err != nil {
+		c.JSON(500, "staff org")
+		return
+	}
+	filter := models.AppointmentModel{}
+	if staffOrg.ProfessionID == 1 {
+		filter.PhotographyID = staffOrg.ID
+		filter.Photography = staffOrg
+	} else if staffOrg.ProfessionID == 2 {
+		filter.LaboratoryID = staffOrg.ID
+		filter.Laboratory = staffOrg
+	} else if staffOrg.ProfessionID == 3 {
+		filter.RadiologyID = staffOrg.ID
+		filter.Radiology = staffOrg
+	} else {
+		filter.OrganizationID = staffOrg.ID
+		filter.Organization = staffOrg
+	}
+	isDoctor := staffOrg.IsDoctor()
 	if page < 1 {
-		response, _ := appointmentRepository.GetAppointmentListBy(&filter, start, end)
+		response, _ := appointmentRepository.GetAppointmentListBy(&filter, start, end, isDoctor)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, start, end, page, limit)
+	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, start, end, isDoctor, page, limit)
 	c.JSON(200, response)
 	return
 }
@@ -102,13 +125,13 @@ func (u *AppointmentControllerStruct) FilterOrganizationAppointment(c *gin.Conte
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.FilterOrganizationAppointment(organizationID, statues, q, start, end, page, limit)
+	response, _ := appointmentRepository.FilterOrganizationAppointment(organizationID, statues, q, start, end, false, page, limit)
 	c.JSON(200, response)
 }
 
 func (u *AppointmentControllerStruct) GetQueList(c *gin.Context) {
-	startDate := c.Query("start")
-	endDate := c.Query("end")
+	startDate := fmt.Sprintf("%s 00:00:00", c.Query("start"))
+	endDate := fmt.Sprintf("%s 23:59:59", c.Query("end"))
 	var que models.QueStruct
 	organizationID := token.GetStaffUser(c).OrganizationID
 	ques, _ := appointmentRepository.GetAppointmentListBetweenDates(&organizationID, startDate, endDate)
@@ -153,14 +176,101 @@ func (u *AppointmentControllerStruct) GetUserAppointmentList(c *gin.Context) {
 		break
 	}
 	if page < 1 {
-		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "")
+		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "", false)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", page, limit)
+	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", false, page, limit)
+	c.JSON(200, response)
+	return
+}
+
+func (u *AppointmentControllerStruct) AcceptAppointment(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if organization.ID != appointment.OrganizationID || !organization.IsDoctor() {
+		c.JSON(403, "access denied")
+		return
+	}
+	response, err := appointmentRepository.AcceptAppointment(appointment)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, response)
+	return
+}
+
+func (u *AppointmentControllerStruct) CancelAppointment(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if organization.ID != appointment.OrganizationID || !organization.IsDoctor() {
+		c.JSON(403, "access denied")
+		return
+	}
+	response, err := appointmentRepository.CancelAppointment(appointment)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, response)
+	return
+}
+
+func (u *AppointmentControllerStruct) ReserveAppointment(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if organization.ID != appointment.OrganizationID || !organization.IsDoctor() {
+		c.JSON(403, "access denied")
+		return
+	}
+	response, err := appointmentRepository.ReserveAppointment(appointment)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
 	c.JSON(200, response)
 	return
 }
