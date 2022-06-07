@@ -17,6 +17,7 @@ import (
 
 type OrganizationControllerInterface interface {
 	Get(c *gin.Context)
+	GetOrganizationByType(c *gin.Context)
 	GetHolidays(c *gin.Context)
 	CreateHoliday(c *gin.Context)
 	UpdateHoliday(c *gin.Context)
@@ -34,6 +35,20 @@ func NewOOrganizationController() OrganizationControllerInterface {
 func (o *OrganizationControllerStruct) Get(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	response, err := organizationRepository.GetOrganizationByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, err.Error())
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, response)
+}
+
+func (o *OrganizationControllerStruct) GetOrganizationByType(c *gin.Context) {
+	t := c.Param("type")
+	response, err := organizationRepository.GetOrganizationByType(t)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(404, err.Error())

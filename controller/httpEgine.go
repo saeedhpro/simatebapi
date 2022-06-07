@@ -56,6 +56,7 @@ func Run(Port string) {
 	messages := v1.Group("/messages")
 
 	{
+		organizations.GET("/type", middleware.GinJwtAuth(organizationCont.GetOrganizationByType, true, false))
 		organizations.GET("/users", middleware.GinJwtAuth(userCont.GetOrganizationUsersList, true, false))
 		organizations.GET("/appointments", middleware.GinJwtAuth(appointmentCont.GetOrganizationAppointmentList, true, false))
 		organizations.POST("/appointments", middleware.GinJwtAuth(appointmentCont.CreateAppointment, true, false))

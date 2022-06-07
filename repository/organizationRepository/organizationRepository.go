@@ -19,6 +19,25 @@ func GetOrganizationByID(ID uint64) (*models.OrganizationModel, error) {
 	return &organization, nil
 }
 
+func GetOrganizationByType(t string) ([]models.OrganizationModel, error) {
+	organizations := []models.OrganizationModel{}
+	var organization models.OrganizationModel
+	if t == "radiology" {
+		organization.ProfessionID = 3
+	} else if t == "photography" {
+		organization.ProfessionID = 1
+	}
+	err := repository.DB.MySQL.
+		Preload("Profession").
+		Preload("Staff").
+		Find(&organizations, &organization).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	return organizations, nil
+}
+
 func GetOrganizationListBy(conditions *models.OrganizationModel, q string) ([]models.OrganizationModel, error) {
 	organizations := []models.OrganizationModel{}
 	query := repository.DB.MySQL.

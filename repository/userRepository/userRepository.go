@@ -129,7 +129,8 @@ func GetUserByID(ID uint64) (*models.UserModel, error) {
 		Preload("Organization").
 		Preload("Staff").
 		Preload("UserGroup").
-		First(&user, &user).Error
+		First(&user, &user).
+		Error
 	if err != nil {
 		return nil, err
 	}
