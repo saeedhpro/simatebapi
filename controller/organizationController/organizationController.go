@@ -47,7 +47,7 @@ func (o *OrganizationControllerStruct) Get(c *gin.Context) {
 }
 
 func (o *OrganizationControllerStruct) GetOrganizationByType(c *gin.Context) {
-	t := c.Param("type")
+	t := c.Query("type")
 	response, err := organizationRepository.GetOrganizationByType(t)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

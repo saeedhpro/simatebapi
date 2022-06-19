@@ -56,6 +56,13 @@ func (AppointmentModel) TableName() string {
 	return "appointment"
 }
 
+func (a *AppointmentModel) CanUpdate(organization *OrganizationModel) bool {
+	return organization.ID == a.OrganizationID ||
+		organization.ID == a.RadiologyID ||
+		organization.ID == a.LaboratoryID ||
+		organization.ID == a.PhotographyID
+}
+
 type QueStruct struct {
 	DefaultDuration int                `json:"default_duration"`
 	Limits          []CaseType         `json:"limits"`

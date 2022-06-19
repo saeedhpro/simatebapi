@@ -189,9 +189,48 @@ func CreateAppointment(request *requests.AppointmentCreateRequest, staffID uint6
 	return &appointment, nil
 }
 
-func AcceptAppointment(appointment *models.AppointmentModel) (bool, error) {
+func AcceptAppointment(request *requests.AppointmentUpdateRequest) (bool, error) {
+	appointment := models.AppointmentModel{}
+	appointment.ID = request.ID
 	appointment.Status = 2
-	appointment.Organization = nil
+	appointment.Info = request.Info
+	appointment.LaboratoryCases = request.LaboratoryCases
+	appointment.PhotographyCases = request.PhotographyCases
+	appointment.RadiologyCases = request.RadiologyCases
+	appointment.Prescription = request.Prescription
+	appointment.FuturePrescription = request.FuturePrescription
+	appointment.LaboratoryMsg = request.LaboratoryMsg
+	appointment.PhotographyMsg = request.PhotographyMsg
+	appointment.RadiologyMsg = request.RadiologyMsg
+	appointment.LaboratoryID = request.LaboratoryID
+	appointment.PhotographyID = request.PhotographyID
+	appointment.RadiologyID = request.RadiologyID
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error) {
+	appointment := models.AppointmentModel{}
+	appointment.ID = request.ID
+	appointment.Status = request.Status
+	appointment.Info = request.Info
+	appointment.LaboratoryCases = request.LaboratoryCases
+	appointment.PhotographyCases = request.PhotographyCases
+	appointment.RadiologyCases = request.RadiologyCases
+	appointment.Prescription = request.Prescription
+	appointment.FuturePrescription = request.FuturePrescription
+	appointment.LaboratoryMsg = request.LaboratoryMsg
+	appointment.PhotographyMsg = request.PhotographyMsg
+	appointment.RadiologyMsg = request.RadiologyMsg
+	appointment.LaboratoryID = request.LaboratoryID
+	appointment.PhotographyID = request.PhotographyID
+	appointment.RadiologyID = request.RadiologyID
 	err := repository.DB.MySQL.
 		Model(&appointment).
 		Updates(&appointment).
