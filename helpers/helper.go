@@ -64,11 +64,10 @@ func TimeDiff(a, b time.Time) (year, month, day, hour, min, sec int) {
 	return
 }
 
-const charset = "0123456789"
+const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
-
 
 func StringWithCharset(length int, charset string) string {
 	b := make([]byte, length)

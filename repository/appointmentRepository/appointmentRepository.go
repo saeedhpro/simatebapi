@@ -6,6 +6,7 @@ import (
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers/pagination"
 	"github.com/saeedhpro/apisimateb/repository"
+	"time"
 )
 
 func GetAppointmentBy(conditions *models.AppointmentModel) (*models.AppointmentModel, error) {
@@ -231,6 +232,15 @@ func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	appointment.LaboratoryID = request.LaboratoryID
 	appointment.PhotographyID = request.PhotographyID
 	appointment.RadiologyID = request.RadiologyID
+	r, _ := time.Parse("2006-04-01 11:35:54", *request.RResultAt)
+	l, _ := time.Parse("2006-04-01 11:35:54", *request.LResultAt)
+	p, _ := time.Parse("2006-04-01 11:35:54", *request.PResultAt)
+	appointment.RResultAt = &r
+	appointment.LResultAt = &l
+	appointment.PResultAt = &p
+	appointment.RRndImg = request.RRndImg
+	appointment.PRndImg = request.PRndImg
+	appointment.LRndImg = request.LRndImg
 	err := repository.DB.MySQL.
 		Model(&appointment).
 		Updates(&appointment).

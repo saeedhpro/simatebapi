@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/saeedhpro/apisimateb/constant"
 	"time"
 )
 
@@ -42,4 +43,16 @@ func (OrganizationModel) TableName() string {
 
 func (o *OrganizationModel) IsDoctor() bool {
 	return o.ProfessionID != 1 && o.ProfessionID != 2 && o.ProfessionID != 3
+}
+
+func (o *OrganizationModel) IsPhotography() bool {
+	return o.ProfessionID == constant.PhotographyProfession
+}
+
+func (o *OrganizationModel) IsRadiology() bool {
+	return o.ProfessionID == constant.RadiologyProfession
+}
+
+func (o *OrganizationModel) IsLaboratory() bool {
+	return o.ProfessionID == constant.LaboratoryProfession
 }

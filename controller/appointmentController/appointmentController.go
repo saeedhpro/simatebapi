@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
+	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/token"
 	"github.com/saeedhpro/apisimateb/repository/appointmentRepository"
 	"github.com/saeedhpro/apisimateb/repository/caseTypeRepository"
@@ -17,6 +18,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type AppointmentControllerInterface interface {
@@ -306,19 +308,52 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 		c.JSON(403, "access denied")
 		return
 	}
+	rand := ""
+	staff := token.GetStaffUser(c).OrganizationID
+	staffOrg, _ := organizationRepository.GetOrganizationByID(staff)
+	if staffOrg.IsPhotography() {
+		if len(request.Results) > 0 {
+			t := time.Now().Format("2006-04-01 11:35:54")
+			request.PResultAt = &t
+			if appointment.PRndImg == "" {
+				rand := helpers.RandomString(6)
+				request.PRndImg = rand
+			} else {
+				request.PRndImg = appointment.PRndImg
+			}
+		}
+	} else if staffOrg.IsLaboratory() {
+		if len(request.Results) > 0 {
+			t := time.Now().Format("2006-04-01 11:35:54")
+			request.LResultAt = &t
+			if appointment.LRndImg == "" {
+				rand := helpers.RandomString(6)
+				request.LRndImg = rand
+			} else {
+				request.LRndImg = appointment.LRndImg
+			}
+		}
+	} else if staffOrg.IsRadiology() {
+		if len(request.Results) > 0 {
+			t := time.Now().Format("2006-04-01 11:35:54")
+			request.RResultAt = &t
+			if appointment.RRndImg == "" {
+				rand := helpers.RandomString(6)
+				request.RRndImg = rand
+			} else {
+				request.RRndImg = appointment.RRndImg
+			}
+		}
+	}
 	response, err := appointmentRepository.UpdateAppointment(&request)
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
 	}
-	rand := ""
-	staff := token.GetStaffUser(c).OrganizationID
-	staffOrg, _ := organizationRepository.GetOrganizationByID(staff)
-	if staffOrg.ProfessionID == 1 {
-
-	}
-	for i := 0; i < len(request.Results); i++ {
-		saveImageToDisk(fmt.Sprintf("%d/%s/%d", appointment.OrganizationID, rand, i), request.Results[i])
+	if len(request.Results) > 0 {
+		for i := 0; i < len(request.Results); i++ {
+			saveImageToDisk(fmt.Sprintf("%d/%s/%d", appointment.OrganizationID, rand, i), request.Results[i])
+		}
 	}
 	c.JSON(200, response)
 	return
