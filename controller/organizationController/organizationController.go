@@ -2,6 +2,7 @@ package organizationController
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
@@ -43,6 +44,8 @@ func (o *OrganizationControllerStruct) Get(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
+	route := fmt.Sprintf("img/org/%d/%s.jpg", response.ID, response.Logo)
+	response.Logo = fmt.Sprintf("http://%s/%s", c.Request.Host, route)
 	c.JSON(200, response)
 }
 
@@ -56,6 +59,10 @@ func (o *OrganizationControllerStruct) GetOrganizationByType(c *gin.Context) {
 		}
 		c.JSON(500, err.Error())
 		return
+	}
+	for i := 0; i < len(response); i++ {
+		route := fmt.Sprintf("img/org/%d/%s.jpg", response[i].ID, response[i].Logo)
+		response[i].Logo = fmt.Sprintf("http://%s/%s", c.Request.Host, route)
 	}
 	c.JSON(200, response)
 }

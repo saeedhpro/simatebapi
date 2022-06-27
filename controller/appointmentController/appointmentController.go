@@ -1,8 +1,6 @@
 package appointmentController
 
 import (
-	"bytes"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -16,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +25,7 @@ type AppointmentControllerInterface interface {
 	GetAppointment(c *gin.Context)
 	GetAppointmentResults(c *gin.Context)
 	GetUserAppointmentList(c *gin.Context)
+	GetUserResultedAppointmentList(c *gin.Context)
 	GetOrganizationAppointmentList(c *gin.Context)
 	FilterOrganizationAppointment(c *gin.Context)
 	GetQueList(c *gin.Context)
@@ -87,29 +87,32 @@ func (u *AppointmentControllerStruct) GetOrganizationAppointmentList(c *gin.Cont
 		return
 	}
 	filter := models.AppointmentModel{}
-	if staffOrg.ProfessionID == 1 {
+	if staffOrg.IsPhotography() {
 		filter.PhotographyID = staffOrg.ID
 		filter.Photography = staffOrg
-	} else if staffOrg.ProfessionID == 2 {
+		filter.Status = 2
+	} else if staffOrg.IsLaboratory() {
 		filter.LaboratoryID = staffOrg.ID
 		filter.Laboratory = staffOrg
-	} else if staffOrg.ProfessionID == 3 {
+		filter.Status = 2
+	} else if staffOrg.IsRadiology() {
 		filter.RadiologyID = staffOrg.ID
 		filter.Radiology = staffOrg
+		filter.Status = 2
 	} else {
 		filter.OrganizationID = staffOrg.ID
 		filter.Organization = staffOrg
 	}
 	isDoctor := staffOrg.IsDoctor()
 	if page < 1 {
-		response, _ := appointmentRepository.GetAppointmentListBy(&filter, start, end, isDoctor)
+		response, _ := appointmentRepository.GetAppointmentListBy(&filter, start, end, isDoctor, false)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, start, end, isDoctor, page, limit)
+	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, start, end, isDoctor, false, page, limit)
 	c.JSON(200, response)
 	return
 }
@@ -117,6 +120,7 @@ func (u *AppointmentControllerStruct) GetOrganizationAppointmentList(c *gin.Cont
 func (u *AppointmentControllerStruct) GetAppointmentResults(c *gin.Context) {
 	results := []string{}
 	id, _ := strconv.Atoi(c.Param("id"))
+	t := c.Query("type")
 	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -139,23 +143,27 @@ func (u *AppointmentControllerStruct) GetAppointmentResults(c *gin.Context) {
 		c.JSON(200, results)
 		return
 	}
-	if staffOrg.ProfessionID == 1 {
+	if staffOrg.IsPhotography() {
 		rnd = appointment.PRndImg
-	} else if staffOrg.ProfessionID == 2 {
+	} else if staffOrg.IsLaboratory() {
 		rnd = appointment.LRndImg
-	} else if staffOrg.ProfessionID == 3 {
+	} else if staffOrg.IsRadiology() {
 		rnd = appointment.RRndImg
 	} else {
-		c.JSON(422, "")
-		return
+		if t == "photography" {
+			rnd = appointment.PRndImg
+		} else if t == "radiology" {
+			rnd = appointment.RRndImg
+		} else if t == "laboratory" {
+			rnd = appointment.LRndImg
+		}
 	}
 	route := fmt.Sprintf("img/result/%d/%s", appointment.ID, rnd)
 	files, err := ioutil.ReadDir(fmt.Sprintf("./res/%s", route))
 	if err != nil {
-		if err != nil {
-			c.JSON(500, err.Error())
-			return
-		}
+		fmt.Println("read files", err.Error())
+		c.JSON(200, results)
+		return
 	}
 	for _, f := range files {
 		results = append(results, fmt.Sprintf("http://%s/%s/%s", c.Request.Host, route, f.Name()))
@@ -218,29 +226,72 @@ func (u *AppointmentControllerStruct) GetUserAppointmentList(c *gin.Context) {
 	filter := models.AppointmentModel{
 		UserID: uint64(userID),
 	}
-	switch organization.ProfessionID {
-	case 1:
+	isDoctor := false
+	if organization.IsPhotography() {
 		filter.PhotographyID = organization.ID
-		break
-	case 2:
+		filter.Photography = organization
+	} else if organization.IsLaboratory() {
 		filter.LaboratoryID = organization.ID
-		break
-	case 3:
+		filter.Laboratory = organization
+	} else if organization.IsRadiology() {
 		filter.RadiologyID = organization.ID
-		break
-	default:
+		filter.Radiology = organization
+	} else {
 		filter.OrganizationID = organization.ID
-		break
+		filter.Organization = organization
+		isDoctor = true
 	}
 	if page < 1 {
-		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "", false)
+		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "", isDoctor, true)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", false, page, limit)
+	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", isDoctor, true, page, limit)
+	c.JSON(200, response)
+	return
+}
+
+func (u *AppointmentControllerStruct) GetUserResultedAppointmentList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	userID, _ := strconv.Atoi(c.Param("id"))
+	t := c.Query("type")
+	if t == "" {
+		t = "photography"
+	}
+	staff := token.GetStaffUser(c)
+	organization, err := organizationRepository.GetOrganizationByID(staff.OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	filter := models.AppointmentModel{
+		UserID: uint64(userID),
+	}
+	if organization.IsDoctor() {
+		filter.OrganizationID = organization.ID
+	} else {
+		if t == "photography" {
+			filter.PhotographyID = organization.ID
+			filter.Photography = organization
+		} else if t == "radiology" {
+			filter.RadiologyID = organization.ID
+			filter.Radiology = organization
+		}
+	}
+	fmt.Println(filter.Radiology)
+	if page < 1 {
+		response, _ := appointmentRepository.GetResultedAppointmentListBy(&filter, t)
+		c.JSON(200, response)
+		return
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	response, _ := appointmentRepository.GetPaginatedResultedAppointmentListBy(&filter, t, page, limit)
 	c.JSON(200, response)
 	return
 }
@@ -271,6 +322,24 @@ func (u *AppointmentControllerStruct) AcceptAppointment(c *gin.Context) {
 	if organization.ID != appointment.OrganizationID || !organization.IsDoctor() {
 		c.JSON(403, "access denied")
 		return
+	}
+	staff := token.GetStaffUser(c).OrganizationID
+	staffOrg, _ := organizationRepository.GetOrganizationByID(staff)
+	if staffOrg.IsPhotography() {
+		if len(request.Results) > 0 {
+			t := time.Now().Format("2006-04-01 11:35:54")
+			request.PAdmissionAt = &t
+		}
+	} else if staffOrg.IsLaboratory() {
+		if len(request.Results) > 0 {
+			t := time.Now().Format("2006-04-01 11:35:54")
+			request.LAdmissionAt = &t
+		}
+	} else if staffOrg.IsRadiology() {
+		if len(request.Results) > 0 {
+			t := time.Now().Format("2006-04-01 11:35:54")
+			request.RAdmissionAt = &t
+		}
 	}
 	response, err := appointmentRepository.AcceptAppointment(&request)
 	if err != nil {
@@ -311,37 +380,36 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 	rand := ""
 	staff := token.GetStaffUser(c).OrganizationID
 	staffOrg, _ := organizationRepository.GetOrganizationByID(staff)
-	if staffOrg.IsPhotography() {
-		if len(request.Results) > 0 {
-			t := time.Now().Format("2006-04-01 11:35:54")
+	if len(request.Results) > 0 {
+		if staffOrg.IsPhotography() {
+			t := time.Now().Format("2006-01-02 15:04:05")
 			request.PResultAt = &t
 			if appointment.PRndImg == "" {
 				rand := helpers.RandomString(6)
 				request.PRndImg = rand
 			} else {
 				request.PRndImg = appointment.PRndImg
+				rand = appointment.PRndImg
 			}
-		}
-	} else if staffOrg.IsLaboratory() {
-		if len(request.Results) > 0 {
-			t := time.Now().Format("2006-04-01 11:35:54")
+		} else if staffOrg.IsLaboratory() {
+			t := time.Now().Format("2006-01-02 15:04:05")
 			request.LResultAt = &t
 			if appointment.LRndImg == "" {
 				rand := helpers.RandomString(6)
 				request.LRndImg = rand
 			} else {
 				request.LRndImg = appointment.LRndImg
+				rand = appointment.LRndImg
 			}
-		}
-	} else if staffOrg.IsRadiology() {
-		if len(request.Results) > 0 {
-			t := time.Now().Format("2006-04-01 11:35:54")
+		} else if staffOrg.IsRadiology() {
+			t := time.Now().Format("2006-01-02 15:04:05")
 			request.RResultAt = &t
 			if appointment.RRndImg == "" {
 				rand := helpers.RandomString(6)
 				request.RRndImg = rand
 			} else {
 				request.RRndImg = appointment.RRndImg
+				rand = appointment.RRndImg
 			}
 		}
 	}
@@ -352,42 +420,25 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 	}
 	if len(request.Results) > 0 {
 		for i := 0; i < len(request.Results); i++ {
-			saveImageToDisk(fmt.Sprintf("%d/%s/%d", appointment.OrganizationID, rand, i), request.Results[i])
+			location := fmt.Sprintf("./res/img/result/%d/%s", appointment.ID, rand)
+			files, err := ioutil.ReadDir(location)
+			if err != nil {
+				if os.IsNotExist(err) {
+					err = os.MkdirAll(location, os.ModePerm)
+					if err != nil {
+						fmt.Println(err.Error())
+					}
+				}
+			}
+			names := []string{}
+			for i := 0; i < len(files); i++ {
+				names = append(names, files[i].Name())
+			}
+			helpers.SaveImageToDisk(location, names, request.Results[i])
 		}
 	}
 	c.JSON(200, response)
 	return
-}
-
-func saveImageToDisk(fileNameBase string, data string) (string, error) {
-	idx := strings.Index(data, ";base64,")
-	if idx < 0 {
-		return "", fmt.Errorf("invalid image")
-	}
-	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(data[idx+8:]))
-	buff := bytes.Buffer{}
-	_, err := buff.ReadFrom(reader)
-	if err != nil {
-		log.Println("errpeed")
-		return "", err
-	}
-	//imgCfg, fm, err := image.DecodeConfig(bytes.NewReader(buff.Bytes()))
-	//if err != nil {
-	//	log.Println("errpeed 2")
-	//	return "", err
-	//}
-	//
-	//if imgCfg.Width != 750 || imgCfg.Height != 685 {
-	//	return "", fmt.Errorf("invalid size")
-	//}
-
-	fileName := fileNameBase + "." + "jpeg"
-	err = ioutil.WriteFile(fmt.Sprintf("./res/img/result/%s", fileName), buff.Bytes(), 0644)
-	if err != nil {
-		fmt.Println(err.Error(), "cf")
-		return "", fmt.Errorf("cant save file")
-	}
-	return fileName, err
 }
 
 func (u *AppointmentControllerStruct) CancelAppointment(c *gin.Context) {

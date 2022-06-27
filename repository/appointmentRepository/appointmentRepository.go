@@ -6,6 +6,7 @@ import (
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers/pagination"
 	"github.com/saeedhpro/apisimateb/repository"
+	"github.com/saeedhpro/apisimateb/repository/organizationRepository"
 	"time"
 )
 
@@ -18,7 +19,7 @@ func GetAppointmentBy(conditions *models.AppointmentModel) (*models.AppointmentM
 	return &appointment, nil
 }
 
-func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool) ([]models.AppointmentModel, error) {
+func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool, needResult bool) ([]models.AppointmentModel, error) {
 	appointments := []models.AppointmentModel{}
 	query := repository.DB.MySQL.
 		Preload("Organization").
@@ -26,14 +27,23 @@ func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end
 		Preload("Radiology").
 		Preload("Staff").
 		Preload("User")
-	fmt.Println(isDoctor)
 	if !isDoctor {
-		if conditions.Photography != nil {
-			query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
-		} else if conditions.Radiology != nil {
-			query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
-		} else if conditions.Laboratory != nil {
-			query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+		if !needResult {
+			if conditions.Photography != nil {
+				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
+			} else if conditions.Radiology != nil {
+				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
+			} else if conditions.Laboratory != nil {
+				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+			}
+		} else {
+			if conditions.Photography != nil {
+				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
+			} else if conditions.Radiology != nil {
+				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
+			} else if conditions.Laboratory != nil {
+				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NOT NULL and status = 2")
+			}
 		}
 	} else {
 		if start != "" {
@@ -51,7 +61,28 @@ func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end
 	return appointments, nil
 }
 
-func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool, page int, limit int) (pagination.Pagination, error) {
+func GetResultedAppointmentListBy(conditions *models.AppointmentModel, t string) ([]models.AppointmentModel, error) {
+	appointments := []models.AppointmentModel{}
+	query := repository.DB.MySQL.
+		Preload("Organization").
+		Preload("Photography").
+		Preload("Radiology").
+		Preload("Staff").
+		Preload("User")
+	if t == "photography" {
+		query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
+	} else if t == "radiology" {
+		query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
+	}
+	err := query.
+		Find(&appointments, &conditions).Error
+	if err != nil {
+		return appointments, err
+	}
+	return appointments, nil
+}
+
+func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool, needResult bool, page int, limit int) (pagination.Pagination, error) {
 	appointments := []models.AppointmentModel{}
 	paginate := pagination.Pagination{
 		Page:  page,
@@ -60,12 +91,22 @@ func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start st
 	var count int64 = 0
 	query := repository.DB.MySQL
 	if !isDoctor {
-		if conditions.Photography != nil {
-			query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
-		} else if conditions.Radiology != nil {
-			query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
-		} else if conditions.Laboratory != nil {
-			query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+		if !needResult {
+			if conditions.Photography != nil {
+				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
+			} else if conditions.Radiology != nil {
+				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
+			} else if conditions.Laboratory != nil {
+				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+			}
+		} else {
+			if conditions.Photography != nil {
+				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
+			} else if conditions.Radiology != nil {
+				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
+			} else if conditions.Laboratory != nil {
+				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NOT NULL and status = 2")
+			}
 		}
 	} else {
 		if start != "" {
@@ -78,12 +119,22 @@ func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start st
 	query.Find(&appointments, &conditions).Count(&count)
 	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User")
 	if !isDoctor {
-		if conditions.Photography != nil {
-			query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
-		} else if conditions.Radiology != nil {
-			query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
-		} else if conditions.Laboratory != nil {
-			query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+		if !needResult {
+			if conditions.Photography != nil {
+				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
+			} else if conditions.Radiology != nil {
+				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
+			} else if conditions.Laboratory != nil {
+				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+			}
+		} else {
+			if conditions.Photography != nil {
+				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
+			} else if conditions.Radiology != nil {
+				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
+			} else if conditions.Laboratory != nil {
+				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NOT NULL and status = 2")
+			}
 		}
 	} else {
 		if start != "" {
@@ -101,14 +152,61 @@ func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start st
 	return paginate, nil
 }
 
+func GetPaginatedResultedAppointmentListBy(conditions *models.AppointmentModel, t string, page int, limit int) (pagination.Pagination, error) {
+	appointments := []models.AppointmentModel{}
+	paginate := pagination.Pagination{
+		Page:  page,
+		Limit: limit,
+	}
+	var count int64 = 0
+	query := repository.DB.MySQL
+	if t == "photography" {
+		query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
+	} else if t == "radiology" {
+		query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
+	}
+	query.Find(&appointments, &conditions).Count(&count)
+	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User")
+	if t == "photography" {
+		query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
+	} else if t == "radiology" {
+		query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
+	}
+	err := query.Find(&appointments, &conditions).Error
+	if err != nil {
+		return paginate, err
+	}
+	paginate.Data = appointments
+	return paginate, nil
+}
+
 func FilterOrganizationAppointment(organizationID uint64, status []string, q string, start string, end string, isDoctor bool, page int, limit int) (pagination.Pagination, error) {
 	appointments := []models.AppointmentModel{}
 	paginate := pagination.Pagination{
 		Page:  page,
 		Limit: limit,
 	}
-	query := repository.DB.MySQL.Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User")
-	query = query.Where("organization_id", organizationID)
+	query := repository.DB.MySQL.
+		Preload("Organization").
+		Preload("Photography").
+		Preload("Radiology").
+		Preload("Staff").
+		Preload("User")
+	if isDoctor {
+		query = query.
+			Where("organization_id", organizationID)
+	} else {
+		organization, err := organizationRepository.GetOrganizationByID(organizationID)
+		if err == nil {
+			if organization.IsPhotography() {
+				query = query.
+					Where("photography_id", organizationID)
+			} else if organization.IsRadiology() {
+				query = query.
+					Where("radiology_id", organizationID)
+			}
+		}
+	}
 	if len(status) > 0 {
 		query = query.Where("status IN ?", status)
 	}
@@ -129,7 +227,7 @@ func FilterOrganizationAppointment(organizationID uint64, status []string, q str
 	}
 	var count int64 = 0
 	query.Find(&appointments).Count(&count)
-	err := query.Scopes(pagination.PaginateScope(count, &paginate)).Find(&appointments).Error
+	err := query.Scopes(pagination.PaginateScope(count, &paginate)).Order("id asc").Find(&appointments).Error
 	if err != nil {
 		fmt.Println(err.Error())
 		return paginate, err
@@ -206,6 +304,12 @@ func AcceptAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	appointment.LaboratoryID = request.LaboratoryID
 	appointment.PhotographyID = request.PhotographyID
 	appointment.RadiologyID = request.RadiologyID
+	l, _ := time.Parse("2006-04-01 11:35:54", *request.LAdmissionAt)
+	appointment.LAdmissionAt = &l
+	p, _ := time.Parse("2006-04-01 11:35:54", *request.PAdmissionAt)
+	appointment.PAdmissionAt = &p
+	r, _ := time.Parse("2006-04-01 11:35:54", *request.RAdmissionAt)
+	appointment.RAdmissionAt = &r
 	err := repository.DB.MySQL.
 		Model(&appointment).
 		Updates(&appointment).
@@ -232,12 +336,30 @@ func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	appointment.LaboratoryID = request.LaboratoryID
 	appointment.PhotographyID = request.PhotographyID
 	appointment.RadiologyID = request.RadiologyID
-	r, _ := time.Parse("2006-04-01 11:35:54", *request.RResultAt)
-	l, _ := time.Parse("2006-04-01 11:35:54", *request.LResultAt)
-	p, _ := time.Parse("2006-04-01 11:35:54", *request.PResultAt)
-	appointment.RResultAt = &r
-	appointment.LResultAt = &l
-	appointment.PResultAt = &p
+	if request.RResultAt != nil {
+		r, err := time.Parse("2006-01-02 15:04:05", *request.RResultAt)
+		if err != nil {
+			fmt.Println(err.Error(), "pra")
+		} else {
+			appointment.RResultAt = &r
+		}
+	}
+	if request.LResultAt != nil {
+		l, err := time.Parse("2006-01-02 15:04:05", *request.LResultAt)
+		if err != nil {
+			fmt.Println(err.Error(), "lra")
+		} else {
+			appointment.LResultAt = &l
+		}
+	}
+	if request.PResultAt != nil {
+		p, err := time.Parse("2006-01-02 15:04:05", *request.PResultAt)
+		if err != nil {
+			fmt.Println(err.Error(), "rra")
+		} else {
+			appointment.PResultAt = &p
+		}
+	}
 	appointment.RRndImg = request.RRndImg
 	appointment.PRndImg = request.PRndImg
 	appointment.LRndImg = request.LRndImg

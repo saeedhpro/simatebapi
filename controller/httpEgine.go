@@ -76,8 +76,10 @@ func Run(Port string) {
 		v1.POST("/users", middleware.GinJwtAuth(userCont.CreateUser, true, false))
 		users.POST("/delete", middleware.GinJwtAuth(userCont.DeleteUsers, true, false))
 		users.GET("/:id", middleware.GinJwtAuth(userCont.GetUser, true, false))
+		users.PUT("/:id", middleware.GinJwtAuth(userCont.UpdateUser, true, false))
 		users.DELETE("/:id", middleware.GinJwtAuth(userCont.DeleteUser, true, false))
 		users.GET("/:id/appointments", middleware.GinJwtAuth(appointmentCont.GetUserAppointmentList, true, false))
+		users.GET("/:id/appointments/resulted", middleware.GinJwtAuth(appointmentCont.GetUserResultedAppointmentList, true, false))
 		users.GET("/:id/histories", middleware.GinJwtAuth(medicalHistoryCont.GetUserMedicalHistory, true, false))
 		users.POST("/:id/histories", middleware.GinJwtAuth(medicalHistoryCont.CreateUserMedicalHistory, true, false))
 	}
@@ -92,6 +94,7 @@ func Run(Port string) {
 		appointments.POST("/:id/reserve", middleware.GinJwtAuth(appointmentCont.ReserveAppointment, true, false))
 	}
 	{
+		v1.POST("/files", middleware.GinJwtAuth(fileCont.CreateFile, true, false))
 		files.GET("/:id", middleware.GinJwtAuth(fileCont.GetUserFileList, true, false))
 		files.DELETE("/:id", middleware.GinJwtAuth(fileCont.DeleteFile, true, false))
 	}
@@ -118,8 +121,12 @@ func Run(Port string) {
 		admin.GET("/users", middleware.GinJwtAuth(adminCont.GetUsers, true, false))
 		admin.GET("/patients/online", middleware.GinJwtAuth(adminCont.LastOnlinePatients, true, false))
 		admin.GET("/organizations", middleware.GinJwtAuth(adminCont.GetOrganizations, true, false))
+		admin.POST("/organizations", middleware.GinJwtAuth(adminCont.CreateOrganization, true, false))
+		admin.GET("/organizations/:id/prof", middleware.GinJwtAuth(adminCont.GetOrganizationsByProfession, true, false))
+		admin.PUT("/organizations/:id", middleware.GinJwtAuth(adminCont.UpdateOrganization, true, false))
 		admin.GET("/groups", middleware.GinJwtAuth(adminCont.GetUserGroups, true, false))
 		admin.GET("/messages", middleware.GinJwtAuth(adminCont.GetMessages, true, false))
+		admin.GET("/professions", middleware.GinJwtAuth(adminCont.GetProfessions, true, false))
 		admin.POST("/messages/delete", middleware.GinJwtAuth(adminCont.DeleteMessages, true, false))
 		admin.GET("/holidays", middleware.GinJwtAuth(adminCont.GetHolidays, true, false))
 		admin.POST("/holidays", middleware.GinJwtAuth(adminCont.CreateHoliday, true, false))

@@ -1,9 +1,15 @@
 package helpers
 
 import (
+	"bytes"
+	"encoding/base64"
+	"fmt"
 	"golang.org/x/crypto/bcrypt"
+	"io/ioutil"
+	"log"
 	"math/rand"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -92,4 +98,41 @@ func ItemExists(arrayType interface{}, item interface{}) bool {
 	}
 
 	return false
+}
+
+func SaveImageToDisk(location string, names []string, data string) (string, string, error) {
+	idx := strings.Index(data, ";base64,")
+	if idx < 0 {
+		return "", "", fmt.Errorf("invalid image")
+	}
+	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(data[idx+8:]))
+	buff := bytes.Buffer{}
+	_, err := buff.ReadFrom(reader)
+	if err != nil {
+		log.Println("errpeed")
+		return "", "", err
+	}
+	//imgCfg, fm, err := image.DecodeConfig(bytes.NewReader(buff.Bytes()))
+	//if err != nil {
+	//	log.Println("errpeed 2")
+	//	return "", err
+	//}
+	//
+	//if imgCfg.Width != 750 || imgCfg.Height != 685 {
+	//	return "", fmt.Errorf("invalid size")
+	//}
+	name := ""
+	for {
+		name = RandomString(8)
+		if !ItemExists(names, fmt.Sprintf("%s.jpg", name)) {
+			break
+		}
+	}
+	fileName := fmt.Sprintf("%s/%s.jpg", location, name)
+	err = ioutil.WriteFile(fileName, buff.Bytes(), 0644)
+	if err != nil {
+		fmt.Println(err.Error(), "cf")
+		return "", "", fmt.Errorf("cant save file")
+	}
+	return fileName, name, err
 }

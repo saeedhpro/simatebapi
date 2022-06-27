@@ -192,3 +192,43 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 	}
 	return &user, nil
 }
+
+func UpdateUser(request *requests.UserUpdateRequest) error {
+	birthDate, err := time.Parse(time.RFC3339, request.BirthDate)
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	CityID := request.CityID
+	if request.CityID == nil {
+		CityID = nil
+	}
+	user := models.UserModel{
+		ID:          request.ID,
+		CityID:      *CityID,
+		UserGroupID: *request.UserGroupID,
+		Fname:       request.Fname,
+		Lname:       request.Lname,
+		KnownAs:     request.KnownAs,
+		Gender:      request.Gender,
+		Tel:         request.Tel,
+		Tel1:        request.Tel1,
+		Cardno:      request.Cardno,
+		BirthDate:   &birthDate,
+		FileID:      request.FileID,
+		Address:     request.Address,
+		Info:        request.Info,
+		Introducer:  request.Introducer,
+	}
+	err = repository.DB.MySQL.
+		Model(&user).
+		Where("id = ?", user.ID).
+		Updates(&user).
+		Error
+	fmt.Println(user.ID)
+	if err != nil {
+		fmt.Println(err.Error(), "err")
+		return err
+	}
+	return nil
+}

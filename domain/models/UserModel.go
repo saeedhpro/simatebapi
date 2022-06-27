@@ -44,6 +44,10 @@ type UserModel struct {
 	City           *CityModel         `json:"city" gorm:"foreignkey:CityID"`
 	IsVip          bool               `json:"is_vip" gorm:"is_vip"`
 	Age            int                `json:"age" gorm:"-"`
+	CountyID       *uint64            `json:"county_id" gorm:"-"`
+	County         *CountyModel       `json:"county" gorm:"-"`
+	ProvinceID     *uint64            `json:"province_id" gorm:"-"`
+	Province       *ProvinceModel     `json:"province" gorm:"-"`
 }
 
 func (UserModel) TableName() string {

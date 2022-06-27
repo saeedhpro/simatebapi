@@ -6,6 +6,9 @@ import (
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers/token"
+	"github.com/saeedhpro/apisimateb/repository"
+	"github.com/saeedhpro/apisimateb/repository/countyRepository"
+	"github.com/saeedhpro/apisimateb/repository/provinceRepository"
 	"github.com/saeedhpro/apisimateb/repository/userRepository"
 	"gorm.io/gorm"
 	"log"
@@ -17,6 +20,7 @@ type UserControllerInterface interface {
 	GetOrganizationUsersList(c *gin.Context)
 	GetUser(c *gin.Context)
 	CreateUser(c *gin.Context)
+	UpdateUser(c *gin.Context)
 	DeleteUser(c *gin.Context)
 	DeleteUsers(c *gin.Context)
 }
@@ -72,6 +76,10 @@ func (u *UserControllerStruct) GetUser(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
+	if response.City != nil {
+		response.County, _ = countyRepository.GetCountyByID(response.City.CountyID)
+		response.Province, _ = provinceRepository.GetProvinceByID(response.County.ProvinceID)
+	}
 	c.JSON(200, response)
 	return
 }
@@ -80,7 +88,7 @@ func (u *UserControllerStruct) DeleteUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	staff := token.GetStaffUser(c)
 	if staff.UserGroupID == 1 {
-
+		c.JSON(403, "access denied")
 	}
 	response, err := userRepository.DeleteUserByID(uint64(id))
 	if err != nil {
@@ -116,10 +124,40 @@ func (u *UserControllerStruct) CreateUser(c *gin.Context) {
 	}
 	staff := token.GetStaffUser(c)
 	user, err := userRepository.CreateUser(&request, staff.UserID, staff.OrganizationID)
-	if err !=nil {
+	if err != nil {
 		c.JSON(500, err.Error())
 		return
 	}
 	c.JSON(200, &user)
+	return
+}
+
+func (u *UserControllerStruct) UpdateUser(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	_, err := userRepository.GetUserByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "not found")
+			return
+		} else {
+			c.JSON(500, err.Error())
+			return
+		}
+	}
+	var request requests.UserUpdateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err.Error(), "bind")
+		c.JSON(500, err.Error())
+		return
+	}
+	tx := repository.DB.MySQL.Begin()
+	err = userRepository.UpdateUser(&request)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(500, err.Error())
+		return
+	}
+	tx.Commit()
+	c.JSON(200, true)
 	return
 }
