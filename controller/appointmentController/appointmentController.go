@@ -13,7 +13,6 @@ import (
 	"github.com/saeedhpro/apisimateb/repository/organizationRepository"
 	"gorm.io/gorm"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -46,7 +45,7 @@ func NewAppointmentController() AppointmentControllerInterface {
 func (u *AppointmentControllerStruct) CreateAppointment(c *gin.Context) {
 	var request requests.AppointmentCreateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Println(err.Error(), "bind")
+		fmt.Println(err.Error(), "bind")
 		c.JSON(500, err.Error())
 		return
 	}

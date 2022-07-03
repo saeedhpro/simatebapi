@@ -304,12 +304,18 @@ func AcceptAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	appointment.LaboratoryID = request.LaboratoryID
 	appointment.PhotographyID = request.PhotographyID
 	appointment.RadiologyID = request.RadiologyID
-	l, _ := time.Parse("2006-04-01 11:35:54", *request.LAdmissionAt)
-	appointment.LAdmissionAt = &l
-	p, _ := time.Parse("2006-04-01 11:35:54", *request.PAdmissionAt)
-	appointment.PAdmissionAt = &p
-	r, _ := time.Parse("2006-04-01 11:35:54", *request.RAdmissionAt)
-	appointment.RAdmissionAt = &r
+	if request.LAdmissionAt != nil {
+		l, _ := time.Parse("2006-04-01 11:35:54", *request.LAdmissionAt)
+		appointment.LAdmissionAt = &l
+	}
+	if request.LAdmissionAt != nil {
+		p, _ := time.Parse("2006-04-01 11:35:54", *request.PAdmissionAt)
+		appointment.PAdmissionAt = &p
+	}
+	if request.LAdmissionAt != nil {
+		r, _ := time.Parse("2006-04-01 11:35:54", *request.RAdmissionAt)
+		appointment.RAdmissionAt = &r
+	}
 	err := repository.DB.MySQL.
 		Model(&appointment).
 		Updates(&appointment).

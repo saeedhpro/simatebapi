@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -135,4 +136,18 @@ func SaveImageToDisk(location string, names []string, data string) (string, stri
 		return "", "", fmt.Errorf("cant save file")
 	}
 	return fileName, name, err
+}
+
+func NormalizePhoneNumber(number string) string {
+	match, _ := regexp.MatchString("(\\+98)9\\d{9}", number)
+	if match {
+		return number
+	} else {
+		if len(number) == 11 {
+			n := fmt.Sprintf("+98%s", number[1:])
+			return n
+		} else {
+			return ""
+		}
+	}
 }

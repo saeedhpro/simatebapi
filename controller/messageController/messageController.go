@@ -1,6 +1,7 @@
 package messageController
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
@@ -13,6 +14,7 @@ import (
 type MessageControllerInterface interface {
 	GetOrganizationMessages(c *gin.Context)
 	DeleteMessages(c *gin.Context)
+	SendSms(c *gin.Context)
 }
 
 type MessageControllerStrunct struct {
@@ -71,4 +73,24 @@ func (m *MessageControllerStrunct) DeleteMessages(c *gin.Context) {
 	}
 	c.JSON(200, true)
 	return
+}
+
+func (m *MessageControllerStrunct) SendSms(c *gin.Context) {
+	staff := token.GetStaffUser(c)
+	var request requests.SendSMSRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(422, err.Error())
+		return
+	}
+	ok, msg, err := request.SendSMS()
+	if err != nil {
+		ok = false
+	}
+	err = messageRepository.SendSMS(&request, staff.UserID, staff.OrganizationID, ok)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	fmt.Println(msg)
+	c.JSON(200, true)
 }

@@ -2,8 +2,12 @@ package messageRepository
 
 import (
 	"github.com/saeedhpro/apisimateb/domain/models"
+	"github.com/saeedhpro/apisimateb/domain/requests"
+	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/pagination"
 	"github.com/saeedhpro/apisimateb/repository"
+	"strings"
+	"time"
 )
 
 func GetMessageListBy(conditions *models.SmsModel, q string) ([]models.SmsModel, error) {
@@ -73,4 +77,30 @@ func GetPaginatedMessageListBy(conditions *models.SmsModel, q string, page int, 
 
 func DeleteMessages(ids []uint64) error {
 	return repository.DB.MySQL.Delete(&models.SmsModel{}, ids).Error
+}
+
+func SendSMS(request *requests.SendSMSRequest, staffID uint64, staffOrganizationID uint64, send bool) error {
+	var numbers []string
+	for i := 0; i < len(request.Number); i++ {
+		n := helpers.NormalizePhoneNumber(request.Number[i])
+		if n != "" {
+			numbers = append(numbers, n)
+		}
+	}
+	now := time.Now()
+	sms := models.SmsModel{
+		UserID:         request.UserID,
+		OrganizationID: staffOrganizationID,
+		StaffID:        staffID,
+		Incoming:       true,
+		Msg:            request.Msg,
+		Number:         strings.Join(numbers, ","),
+		Sent:           send,
+		Created:        &now,
+	}
+	err := repository.DB.MySQL.Create(&sms).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

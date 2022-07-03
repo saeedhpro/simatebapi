@@ -135,6 +135,7 @@ func Run(Port string) {
 	}
 
 	{
+		v1.POST("/messages", middleware.GinJwtAuth(messageCont.SendSms, true, false))
 		messages.POST("/delete", middleware.GinJwtAuth(messageCont.DeleteMessages, true, false))
 	}
 

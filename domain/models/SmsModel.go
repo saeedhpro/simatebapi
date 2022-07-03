@@ -8,7 +8,6 @@ type SmsModel struct {
 	Incoming       bool               `json:"incoming" gorm:"incoming"`
 	Msg            string             `json:"msg" gorm:"msg"`
 	Number         string             `json:"number" gorm:"number"`
-	Amount         float64            `json:"amount" gorm:"amount"`
 	UserID         uint64             `json:"user_id" gorm:"user_id"`
 	User           *UserModel         `json:"user" gorm:"foreignkey:UserID"`
 	StaffID        uint64             `json:"staff_id" gorm:"staff_id"`
