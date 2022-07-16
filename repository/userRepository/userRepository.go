@@ -160,7 +160,7 @@ func DeleteUserListByID(IDs []uint64) (bool, error) {
 }
 
 func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizationID uint64) (*models.UserModel, error) {
-	birthDate, err := time.Parse("2014/11/23", request.BirthDate)
+	birthDate, err := time.Parse("2006-01-02", request.BirthDate)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -168,6 +168,7 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 	if request.CityID == nil {
 		CityID = nil
 	}
+	pass, _ := helpers.PasswordHash(request.Pass)
 	user := models.UserModel{
 		OrganizationID: organizationID,
 		StaffID:        staffID,
@@ -185,6 +186,9 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 		Address:        request.Address,
 		Info:           request.Info,
 		Introducer:     request.Introducer,
+		Surgery:        request.Surgery,
+		HasSurgery:     request.HasSurgery,
+		Pass:           pass,
 	}
 	err = repository.DB.MySQL.Create(&user).Error
 	if err != nil {
@@ -219,6 +223,8 @@ func UpdateUser(request *requests.UserUpdateRequest) error {
 		Address:     request.Address,
 		Info:        request.Info,
 		Introducer:  request.Introducer,
+		Surgery:     request.Surgery,
+		HasSurgery:  request.HasSurgery,
 	}
 	err = repository.DB.MySQL.
 		Model(&user).

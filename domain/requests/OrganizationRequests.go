@@ -32,5 +32,18 @@ type CreateOrganizationRequest struct {
 	Image2           string                        `json:"image2"`
 	Text3            string                        `json:"text3"`
 	Image3           string                        `json:"image3"`
+	Text4            string                        `json:"text4"`
+	Image4           string                        `json:"image4"`
 	RelOrganizations []models.RelOrganizationModel `json:"rel_organizations"`
+}
+
+type UpdateOrganizationAbout struct {
+	Text1  string `json:"text1"`
+	Image1 string `json:"image1"`
+	Text2  string `json:"text2"`
+	Image2 string `json:"image2"`
+	Text3  string `json:"text3"`
+	Image3 string `json:"image3"`
+	Text4  string `json:"text4"`
+	Image4 string `json:"image4"`
 }

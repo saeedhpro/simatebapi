@@ -28,6 +28,7 @@ type AdminControllerInterface interface {
 	LastOnlineUsers(c *gin.Context)
 	LastOnlinePatients(c *gin.Context)
 	GetUsers(c *gin.Context)
+	CreateUser(c *gin.Context)
 	GetOrganizations(c *gin.Context)
 	CreateOrganization(c *gin.Context)
 	UpdateOrganization(c *gin.Context)
@@ -94,6 +95,23 @@ func (a *AdminControllerStruct) GetUsers(c *gin.Context) {
 	}
 	users, _ := userRepository.GetPaginatedUserListBy(&filter, q, page, limit)
 	c.JSON(200, users)
+}
+
+func (a *AdminControllerStruct) CreateUser(c *gin.Context) {
+	var request requests.UserCreateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err.Error(), "bind")
+		c.JSON(500, err.Error())
+		return
+	}
+	staff := token.GetStaffUser(c)
+	user, err := userRepository.CreateUser(&request, staff.UserID, *request.OrganizationID)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, &user)
+	return
 }
 
 func (a *AdminControllerStruct) GetOrganizations(c *gin.Context) {

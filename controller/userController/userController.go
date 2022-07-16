@@ -18,6 +18,8 @@ import (
 type UserControllerInterface interface {
 	Own(c *gin.Context)
 	GetOrganizationUsersList(c *gin.Context)
+	GetOrganizationUserList(c *gin.Context)
+	GetOrganizationPatientList(c *gin.Context)
 	GetUser(c *gin.Context)
 	CreateUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
@@ -48,6 +50,56 @@ func (u *UserControllerStruct) GetOrganizationUsersList(c *gin.Context) {
 	staff := token.GetStaffUser(c)
 	filter := models.UserModel{
 		OrganizationID: staff.OrganizationID,
+	}
+	if userGroupID > 0 {
+		filter.UserGroupID = uint64(userGroupID)
+	}
+	if page < 1 {
+		response, _ := userRepository.GetUserListBy(&filter, q)
+		c.JSON(200, response)
+		return
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	response, _ := userRepository.GetPaginatedUserListBy(&filter, q, page, limit)
+	c.JSON(200, response)
+	return
+}
+
+func (u *UserControllerStruct) GetOrganizationUserList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	userGroupID, _ := strconv.Atoi(c.Query("group"))
+	organizationID, _ := strconv.Atoi(c.Param("id"))
+	q := c.Query("q")
+	filter := models.UserModel{
+		OrganizationID: uint64(organizationID),
+	}
+	if userGroupID > 0 {
+		filter.UserGroupID = uint64(userGroupID)
+	}
+	if page < 1 {
+		response, _ := userRepository.GetUserListBy(&filter, q)
+		c.JSON(200, response)
+		return
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	response, _ := userRepository.GetPaginatedUserListBy(&filter, q, page, limit)
+	c.JSON(200, response)
+	return
+}
+
+func (u *UserControllerStruct) GetOrganizationPatientList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	userGroupID, _ := strconv.Atoi(c.Query("group"))
+	organizationID, _ := strconv.Atoi(c.Param("id"))
+	q := c.Query("q")
+	filter := models.UserModel{
+		OrganizationID: uint64(organizationID),
 	}
 	if userGroupID > 0 {
 		filter.UserGroupID = uint64(userGroupID)

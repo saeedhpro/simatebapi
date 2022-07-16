@@ -43,6 +43,8 @@ type UserModel struct {
 	CityID         uint64             `json:"city_id" gorm:"city_id"`
 	City           *CityModel         `json:"city" gorm:"foreignkey:CityID"`
 	IsVip          bool               `json:"is_vip" gorm:"is_vip"`
+	HasSurgery     bool               `json:"has_surgery" gorm:"has_surgery"`
+	Surgery        string             `json:"surgery" gorm:"surgery"`
 	Age            int                `json:"age" gorm:"-"`
 	CountyID       *uint64            `json:"county_id" gorm:"-"`
 	County         *CountyModel       `json:"county" gorm:"-"`

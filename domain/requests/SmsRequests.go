@@ -12,7 +12,7 @@ type SendSMSRequest struct {
 	OrganizationID uint64   `json:"organization_id"`
 }
 
-func (s SendSMSRequest) SendSMS() (bool, *string, error) {
+func (s *SendSMSRequest) SendSMS() (bool, *string, error) {
 	var receptor []string
 	for i := 0; i < len(s.Number); i++ {
 		n := helpers.NormalizePhoneNumber(s.Number[i])

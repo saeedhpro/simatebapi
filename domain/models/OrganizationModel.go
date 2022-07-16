@@ -33,6 +33,8 @@ type OrganizationModel struct {
 	Image2           string                 `json:"image2" gorm:"image2"`
 	Text3            string                 `json:"text3" gorm:"text3"`
 	Image3           string                 `json:"image3" gorm:"image3"`
+	Text4            string                 `json:"text4" gorm:"text4"`
+	Image4           string                 `json:"image4" gorm:"image4"`
 	RelOrganizations []RelOrganizationModel `json:"rel_organizations" gorm:"-"`
 }
 

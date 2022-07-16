@@ -16,6 +16,9 @@ type UserCreateRequest struct {
 	Info           string  `json:"info"`
 	Introducer     string  `json:"introducer"`
 	CityID         *uint64 `json:"city_id"`
+	HasSurgery     bool    `json:"has_surgery"`
+	Surgery        string  `json:"surgery"`
+	Pass           string  `json:"pass"`
 }
 
 type UserUpdateRequest struct {
@@ -35,6 +38,8 @@ type UserUpdateRequest struct {
 	Info           string  `json:"info"`
 	Introducer     string  `json:"introducer"`
 	CityID         *uint64 `json:"city_id"`
+	HasSurgery     bool    `json:"has_surgery"`
+	Surgery        string  `json:"surgery"`
 }
 
 type UserListDeleteRequest struct {

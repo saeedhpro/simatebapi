@@ -15,8 +15,8 @@ import (
 )
 
 func PasswordHash(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-	return string(bytes), err
+	bts, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	return string(bts), err
 }
 
 func PasswordVerify(password, hash string) bool {

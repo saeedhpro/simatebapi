@@ -188,6 +188,28 @@ func UpdateOrganization(request *requests.CreateOrganizationRequest) error {
 	return nil
 }
 
+func UpdateOrganizationAbout(id uint64, request *requests.UpdateOrganizationAbout) error {
+	organization := models.OrganizationModel{
+		ID:     id,
+		Text1:  request.Text1,
+		Image1: request.Image1,
+		Text2:  request.Text2,
+		Image2: request.Image2,
+		Text3:  request.Text3,
+		Image3: request.Image3,
+	}
+	err := repository.DB.MySQL.
+		Model(&organization).
+		Where("id = ?", &organization.ID).
+		Updates(organization).
+		Error
+	if err != nil {
+		fmt.Println(err.Error(), "err")
+		return err
+	}
+	return nil
+}
+
 func CreateOrganization(request *requests.CreateOrganizationRequest) (*models.OrganizationModel, error) {
 	created := time.Now()
 	organization := models.OrganizationModel{
