@@ -6,7 +6,7 @@ import (
 	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/pagination"
 	"github.com/saeedhpro/apisimateb/repository"
-	"strings"
+	"github.com/saeedhpro/apisimateb/repository/userRepository"
 	"time"
 )
 
@@ -81,26 +81,32 @@ func DeleteMessages(ids []uint64) error {
 
 func SendSMS(request *requests.SendSMSRequest, staffID uint64, staffOrganizationID uint64, send bool) error {
 	var numbers []string
+	var smsList []models.SmsModel
 	for i := 0; i < len(request.Number); i++ {
 		n := helpers.NormalizePhoneNumber(request.Number[i])
 		if n != "" {
-			numbers = append(numbers, n)
+			user, _ := userRepository.GetUserBy(&models.UserModel{
+				Tel: request.Number[i],
+			})
+			if user != nil {
+				now := time.Now()
+				sms := models.SmsModel{
+					UserID:         user.ID,
+					OrganizationID: staffOrganizationID,
+					StaffID:        staffID,
+					Incoming:       true,
+					Msg:            request.Msg,
+					Number:         user.Tel,
+					Sent:           send,
+					Created:        &now,
+				}
+				smsList = append(smsList, sms)
+				numbers = append(numbers, n)
+			}
 		}
 	}
-	now := time.Now()
-	sms := models.SmsModel{
-		UserID:         request.UserID,
-		OrganizationID: staffOrganizationID,
-		StaffID:        staffID,
-		Incoming:       true,
-		Msg:            request.Msg,
-		Number:         strings.Join(numbers, ","),
-		Sent:           send,
-		Created:        &now,
-	}
-	err := repository.DB.MySQL.Create(&sms).Error
-	if err != nil {
-		return err
+	for i := 0; i < len(smsList); i++ {
+		_ = repository.DB.MySQL.Create(&smsList[i]).Error
 	}
 	return nil
 }

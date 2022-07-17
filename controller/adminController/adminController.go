@@ -135,6 +135,7 @@ func (a *AdminControllerStruct) GetOrganizations(c *gin.Context) {
 	for i := 0; i < len(response.Data.([]models.OrganizationModel)); i++ {
 		route := fmt.Sprintf("img/org/%d/%s.jpg", response.Data.([]models.OrganizationModel)[i].ID, response.Data.([]models.OrganizationModel)[i].Logo)
 		response.Data.([]models.OrganizationModel)[i].Logo = fmt.Sprintf("http://%s/%s", c.Request.Host, route)
+		response.Data.([]models.OrganizationModel)[i].Staff, _ = userRepository.GetUserByID(response.Data.([]models.OrganizationModel)[i].StaffID)
 	}
 	c.JSON(200, response)
 }
@@ -208,8 +209,9 @@ func (a *AdminControllerStruct) UpdateOrganization(c *gin.Context) {
 }
 
 func (a *AdminControllerStruct) CreateOrganization(c *gin.Context) {
-	staff, _ := userRepository.GetUserByID(token.GetStaffUser(c).UserID)
-	if !staff.IsAdmin() {
+	staff := token.GetStaffUser(c)
+	staffUser, _ := userRepository.GetUserByID(staff.UserID)
+	if !staffUser.IsAdmin() {
 		c.JSON(403, "Access Denied!")
 		return
 	}
@@ -219,7 +221,7 @@ func (a *AdminControllerStruct) CreateOrganization(c *gin.Context) {
 		return
 	}
 	tx := repository.DB.MySQL.Begin()
-	request.StaffID = staff.ID
+	request.StaffID = staff.UserID
 	organization, err := organizationRepository.CreateOrganization(&request)
 	if err != nil {
 		tx.Rollback()

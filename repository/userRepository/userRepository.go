@@ -168,7 +168,7 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 	if request.CityID == nil {
 		CityID = nil
 	}
-	pass, _ := helpers.PasswordHash(request.Pass)
+	created := time.Now()
 	user := models.UserModel{
 		OrganizationID: organizationID,
 		StaffID:        staffID,
@@ -188,8 +188,13 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 		Introducer:     request.Introducer,
 		Surgery:        request.Surgery,
 		HasSurgery:     request.HasSurgery,
-		Pass:           pass,
+		Created:        &created,
 	}
+	if request.Pass != "" {
+		pass, _ := helpers.PasswordHash(request.Pass)
+		user.Pass = pass
+	}
+	fmt.Println(user.OrganizationID)
 	err = repository.DB.MySQL.Create(&user).Error
 	if err != nil {
 		return nil, err

@@ -84,6 +84,8 @@ func (m *MessageControllerStrunct) SendSms(c *gin.Context) {
 	}
 	ok, msg, err := request.SendSMS()
 	if err != nil {
+		fmt.Println(msg)
+		fmt.Println(err.Error())
 		ok = false
 	}
 	err = messageRepository.SendSMS(&request, staff.UserID, staff.OrganizationID, ok)
@@ -91,6 +93,5 @@ func (m *MessageControllerStrunct) SendSms(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
-	fmt.Println(msg)
 	c.JSON(200, true)
 }

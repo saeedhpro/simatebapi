@@ -7,7 +7,7 @@ import (
 
 type SendSMSRequest struct {
 	UserID         uint64   `json:"user_id"`
-	Number         []string `json:"number"`
+	Number         []string `json:"numbers"`
 	Msg            string   `json:"msg"`
 	OrganizationID uint64   `json:"organization_id"`
 }
