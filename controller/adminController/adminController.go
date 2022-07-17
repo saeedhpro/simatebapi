@@ -33,6 +33,8 @@ type AdminControllerInterface interface {
 	CreateOrganization(c *gin.Context)
 	UpdateOrganization(c *gin.Context)
 	GetOrganizationsByProfession(c *gin.Context)
+	GetOrganizationSliders(c *gin.Context)
+	AddOrganizationSliders(c *gin.Context)
 	GetProfessions(c *gin.Context)
 	GetUserGroups(c *gin.Context)
 	GetMessages(c *gin.Context)
@@ -312,6 +314,76 @@ func (a *AdminControllerStruct) GetOrganizationsByProfession(c *gin.Context) {
 	response.Photographies = photographies
 	response.Doctors = doctors
 	c.JSON(200, response)
+}
+
+func (a *AdminControllerStruct) GetOrganizationSliders(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(500, "Invalid id")
+		return
+	}
+	organization, _ := organizationRepository.GetOrganizationByID(uint64(id))
+	sliders := []string{}
+	location := fmt.Sprintf("./res/img/slider/%d/%s", organization.ID, organization.SliderRndImg)
+	files, err := ioutil.ReadDir(location)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println(err.Error(), "err")
+			c.JSON(200, sliders)
+			return
+		}
+		fmt.Println(err.Error())
+		c.JSON(200, sliders)
+		return
+	}
+	for i := 0; i < len(files); i++ {
+		if !files[i].IsDir() {
+			route := fmt.Sprintf("img/slider/%d/%s/%s", organization.ID, organization.SliderRndImg, files[i].Name())
+			url := fmt.Sprintf("http://%s/%s", c.Request.Host, route)
+			sliders = append(sliders, url)
+		}
+	}
+	c.JSON(200, sliders)
+}
+
+func (a *AdminControllerStruct) AddOrganizationSliders(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(500, "Invalid id")
+		return
+	}
+	var request requests.AddOrganizationSliders
+	if err = c.ShouldBindJSON(&request); err != nil {
+		c.JSON(422, err.Error())
+		return
+	}
+	organization, _ := organizationRepository.GetOrganizationByID(uint64(id))
+	rand := helpers.RandomString(8)
+	if organization.SliderRndImg != "" {
+		rand = organization.SliderRndImg
+	}
+	location := fmt.Sprintf("./res/img/slider/%d/%s", organization.ID, rand)
+	_, err = ioutil.ReadDir(location)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(location, os.ModePerm)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}
+	}
+	for i := 0; i < len(request.Sliders); i++ {
+		names := []string{}
+		_, _, err := helpers.SaveImageToDisk(location, names, request.Sliders[i])
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+	_ = organizationRepository.UpdateOrganization(&requests.CreateOrganizationRequest{
+		ID:           organization.ID,
+		SliderRndImg: rand,
+	})
+	c.JSON(200, true)
 }
 
 func (a *AdminControllerStruct) GetProfessions(c *gin.Context) {

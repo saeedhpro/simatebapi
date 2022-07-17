@@ -138,6 +138,27 @@ func SaveImageToDisk(location string, names []string, data string) (string, stri
 	return fileName, name, err
 }
 
+func SaveImageToDiskByName(location string, data string, name string) (string, string, error) {
+	idx := strings.Index(data, ";base64,")
+	if idx < 0 {
+		return "", "", fmt.Errorf("invalid image")
+	}
+	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(data[idx+8:]))
+	buff := bytes.Buffer{}
+	_, err := buff.ReadFrom(reader)
+	if err != nil {
+		log.Println("errpeed")
+		return "", "", err
+	}
+	fileName := fmt.Sprintf("%s/%s.jpg", location, name)
+	err = ioutil.WriteFile(fileName, buff.Bytes(), 0644)
+	if err != nil {
+		fmt.Println(err.Error(), "cf")
+		return "", "", fmt.Errorf("cant save file")
+	}
+	return fileName, name, err
+}
+
 func NormalizePhoneNumber(number string) string {
 	match, _ := regexp.MatchString("(\\+98)9\\d{9}", number)
 	if match {

@@ -127,6 +127,8 @@ func Run(Port string) {
 		admin.GET("/organizations", middleware.GinJwtAuth(adminCont.GetOrganizations, true, false))
 		admin.POST("/organizations", middleware.GinJwtAuth(adminCont.CreateOrganization, true, false))
 		admin.GET("/organizations/:id/prof", middleware.GinJwtAuth(adminCont.GetOrganizationsByProfession, true, false))
+		admin.GET("/organizations/:id/sliders", middleware.GinJwtAuth(adminCont.GetOrganizationSliders, true, false))
+		admin.POST("/organizations/:id/sliders", middleware.GinJwtAuth(adminCont.AddOrganizationSliders, true, false))
 		admin.PUT("/organizations/:id", middleware.GinJwtAuth(adminCont.UpdateOrganization, true, false))
 		admin.GET("/groups", middleware.GinJwtAuth(adminCont.GetUserGroups, true, false))
 		admin.GET("/messages", middleware.GinJwtAuth(adminCont.GetMessages, true, false))

@@ -38,6 +38,17 @@ type CreateOrganizationRequest struct {
 }
 
 type UpdateOrganizationAbout struct {
+	Text1 string `json:"text1"`
+	New1  string `json:"new1"`
+	Text2 string `json:"text2"`
+	New2  string `json:"new2"`
+	Text3 string `json:"text3"`
+	New3  string `json:"new3"`
+	Text4 string `json:"text4"`
+	New4  string `json:"new4"`
+}
+
+type UpdateOrganizationAboutNames struct {
 	Text1  string `json:"text1"`
 	Image1 string `json:"image1"`
 	Text2  string `json:"text2"`
@@ -46,4 +57,9 @@ type UpdateOrganizationAbout struct {
 	Image3 string `json:"image3"`
 	Text4  string `json:"text4"`
 	Image4 string `json:"image4"`
+}
+
+type AddOrganizationSliders struct {
+	ID      uint64   `json:"id"`
+	Sliders []string `json:"sliders"`
 }

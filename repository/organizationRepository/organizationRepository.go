@@ -188,7 +188,7 @@ func UpdateOrganization(request *requests.CreateOrganizationRequest) error {
 	return nil
 }
 
-func UpdateOrganizationAbout(id uint64, request *requests.UpdateOrganizationAbout) error {
+func UpdateOrganizationAbout(id uint64, request *requests.UpdateOrganizationAboutNames) error {
 	organization := models.OrganizationModel{
 		ID:     id,
 		Text1:  request.Text1,
@@ -197,6 +197,8 @@ func UpdateOrganizationAbout(id uint64, request *requests.UpdateOrganizationAbou
 		Image2: request.Image2,
 		Text3:  request.Text3,
 		Image3: request.Image3,
+		Text4:  request.Text4,
+		Image4: request.Image4,
 	}
 	err := repository.DB.MySQL.
 		Model(&organization).
