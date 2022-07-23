@@ -78,7 +78,10 @@ func GetUserListBy(conditions *models.UserModel, q string) ([]models.UserModel, 
 	users := []models.UserModel{}
 	query := repository.DB.MySQL.Preload("Organization").Preload("Staff").Preload("UserGroup")
 	if q != "" {
-		query = query.Where(repository.DB.MySQL.Where("fname LIKE ?", "%"+q+"%").Or("lname LIKE ?", "%"+q+"%"))
+		query = query.Where(repository.DB.MySQL.
+			Where("fname LIKE ?", "%"+q+"%").
+			Or("lname LIKE ?", "%"+q+"%").
+			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
 	err := query.Find(&users, &conditions).Error
 	if err != nil {
@@ -102,12 +105,18 @@ func GetPaginatedUserListBy(conditions *models.UserModel, q string, page int, li
 	var count int64 = 0
 	query := repository.DB.MySQL
 	if q != "" {
-		query = query.Where(repository.DB.MySQL.Where("fname LIKE ?", "%"+q+"%").Or("lname LIKE ?", "%"+q+"%"))
+		query = query.Where(repository.DB.MySQL.
+			Where("fname LIKE ?", "%"+q+"%").
+			Or("lname LIKE ?", "%"+q+"%").
+			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
 	query.Find(&users, &conditions).Count(&count)
 	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Staff").Preload("UserGroup")
 	if q != "" {
-		query = query.Where(repository.DB.MySQL.Where("fname LIKE ?", "%"+q+"%").Or("lname LIKE ?", "%"+q+"%"))
+		query = query.Where(repository.DB.MySQL.
+			Where("fname LIKE ?", "%"+q+"%").
+			Or("lname LIKE ?", "%"+q+"%").
+			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
 	err := query.Find(&users, &conditions).Error
 	if err != nil {
@@ -141,6 +150,26 @@ func GetUserByID(ID uint64) (*models.UserModel, error) {
 	return &user, nil
 }
 
+func GetNumberListByOrganizationID(ID uint64) ([]string, error) {
+	var numbers []string
+	query := repository.DB.MySQL.
+		Table("user").
+		Where("tel IS NOT NULL")
+	if ID != 0 {
+		query = query.
+			Where("organization_id = ?", ID)
+	}
+	err := query.
+		Select("tel").
+		Find(&numbers).
+		Error
+	if err != nil {
+		fmt.Println(err.Error())
+		return numbers, err
+	}
+	return numbers, nil
+}
+
 func DeleteUserByID(ID uint64) (bool, error) {
 	var user models.UserModel
 	user.ID = ID
@@ -160,10 +189,6 @@ func DeleteUserListByID(IDs []uint64) (bool, error) {
 }
 
 func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizationID uint64) (*models.UserModel, error) {
-	birthDate, err := time.Parse("2006-01-02", request.BirthDate)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
 	CityID := request.CityID
 	if request.CityID == nil {
 		CityID = nil
@@ -181,7 +206,6 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 		Tel:            request.Tel,
 		Tel1:           request.Tel1,
 		Cardno:         request.Cardno,
-		BirthDate:      &birthDate,
 		FileID:         request.FileID,
 		Address:        request.Address,
 		Info:           request.Info,
@@ -190,12 +214,19 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 		HasSurgery:     request.HasSurgery,
 		Created:        &created,
 	}
+	if request.BirthDate != "" {
+		birthDate, err := time.Parse("2006-01-02", request.BirthDate)
+		if err == nil {
+			fmt.Println(err.Error())
+			user.BirthDate = &birthDate
+		}
+	}
 	if request.Pass != "" {
 		pass, _ := helpers.PasswordHash(request.Pass)
 		user.Pass = pass
 	}
 	fmt.Println(user.OrganizationID)
-	err = repository.DB.MySQL.Create(&user).Error
+	err := repository.DB.MySQL.Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -203,11 +234,6 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 }
 
 func UpdateUser(request *requests.UserUpdateRequest) error {
-	birthDate, err := time.Parse(time.RFC3339, request.BirthDate)
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
 	CityID := request.CityID
 	if request.CityID == nil {
 		CityID = nil
@@ -223,7 +249,6 @@ func UpdateUser(request *requests.UserUpdateRequest) error {
 		Tel:         request.Tel,
 		Tel1:        request.Tel1,
 		Cardno:      request.Cardno,
-		BirthDate:   &birthDate,
 		FileID:      request.FileID,
 		Address:     request.Address,
 		Info:        request.Info,
@@ -231,7 +256,14 @@ func UpdateUser(request *requests.UserUpdateRequest) error {
 		Surgery:     request.Surgery,
 		HasSurgery:  request.HasSurgery,
 	}
-	err = repository.DB.MySQL.
+	if request.BirthDate != "" {
+		birthDate, err := time.Parse("2006-01-02", request.BirthDate)
+		if err == nil {
+			fmt.Println(err.Error())
+			user.BirthDate = &birthDate
+		}
+	}
+	err := repository.DB.MySQL.
 		Model(&user).
 		Where("id = ?", user.ID).
 		Updates(&user).

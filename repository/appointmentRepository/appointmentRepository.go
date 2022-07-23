@@ -19,7 +19,7 @@ func GetAppointmentBy(conditions *models.AppointmentModel) (*models.AppointmentM
 	return &appointment, nil
 }
 
-func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool, needResult bool) ([]models.AppointmentModel, error) {
+func GetAppointmentListBy(conditions *models.AppointmentModel, q string, start string, end string, isDoctor bool, needResult bool) ([]models.AppointmentModel, error) {
 	appointments := []models.AppointmentModel{}
 	query := repository.DB.MySQL.
 		Preload("Organization").
@@ -27,6 +27,15 @@ func GetAppointmentListBy(conditions *models.AppointmentModel, start string, end
 		Preload("Radiology").
 		Preload("Staff").
 		Preload("User")
+	if q != "" {
+		query = query.
+			Joins("left join (select id, fname, lname from user) user on appointment.user_id = user.id").
+			Where(repository.DB.MySQL.
+				Where("fname LIKE ?", "%"+q+"%").
+				Or("lname LIKE ?", "%"+q+"%").
+				Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%").
+				Or("code LIKE ?", "%"+q+"%"))
+	}
 	if !isDoctor {
 		if !needResult {
 			if conditions.Photography != nil {
@@ -82,7 +91,7 @@ func GetResultedAppointmentListBy(conditions *models.AppointmentModel, t string)
 	return appointments, nil
 }
 
-func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start string, end string, isDoctor bool, needResult bool, page int, limit int) (pagination.Pagination, error) {
+func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, q string, start string, end string, isDoctor bool, needResult bool, page int, limit int) (pagination.Pagination, error) {
 	appointments := []models.AppointmentModel{}
 	paginate := pagination.Pagination{
 		Page:  page,
@@ -90,6 +99,15 @@ func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, start st
 	}
 	var count int64 = 0
 	query := repository.DB.MySQL
+	if q != "" {
+		query = query.
+			Joins("left join (select id, fname, lname from user) user on appointment.user_id = user.id").
+			Where(repository.DB.MySQL.
+				Where("fname LIKE ?", "%"+q+"%").
+				Or("lname LIKE ?", "%"+q+"%").
+				Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%").
+				Or("code LIKE ?", "%"+q+"%"))
+	}
 	if !isDoctor {
 		if !needResult {
 			if conditions.Photography != nil {
@@ -215,7 +233,9 @@ func FilterOrganizationAppointment(organizationID uint64, status []string, q str
 			Joins("left join (select id, fname, lname from user) user on appointment.user_id = user.id").
 			Where(repository.DB.MySQL.
 				Where("fname LIKE ?", "%"+q+"%").
-				Or("lname LIKE ?", "%"+q+"%"))
+				Or("lname LIKE ?", "%"+q+"%").
+				Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%").
+				Or("code LIKE ?", "%"+q+"%"))
 	}
 	if start != "" {
 		query = query.

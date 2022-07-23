@@ -79,6 +79,7 @@ func (u *AppointmentControllerStruct) GetOrganizationAppointmentList(c *gin.Cont
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	start := c.Query("start")
 	end := c.Query("end")
+	q := c.Query("q")
 	staff := token.GetStaffUser(c)
 	staffOrg, err := organizationRepository.GetOrganizationByID(staff.OrganizationID)
 	if err != nil {
@@ -104,14 +105,14 @@ func (u *AppointmentControllerStruct) GetOrganizationAppointmentList(c *gin.Cont
 	}
 	isDoctor := staffOrg.IsDoctor()
 	if page < 1 {
-		response, _ := appointmentRepository.GetAppointmentListBy(&filter, start, end, isDoctor, false)
+		response, _ := appointmentRepository.GetAppointmentListBy(&filter, q, start, end, isDoctor, false)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, start, end, isDoctor, false, page, limit)
+	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, q, start, end, isDoctor, false, page, limit)
 	c.JSON(200, response)
 	return
 }
@@ -241,14 +242,14 @@ func (u *AppointmentControllerStruct) GetUserAppointmentList(c *gin.Context) {
 		isDoctor = true
 	}
 	if page < 1 {
-		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "", isDoctor, true)
+		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "", "", isDoctor, true)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", isDoctor, true, page, limit)
+	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", "", isDoctor, true, page, limit)
 	c.JSON(200, response)
 	return
 }

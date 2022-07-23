@@ -82,13 +82,22 @@ func (m *MessageControllerStrunct) SendSms(c *gin.Context) {
 		c.JSON(422, err.Error())
 		return
 	}
-	ok, msg, err := request.SendSMS()
+	if request.Type == 1 {
+		request.Numbers = append(request.Numbers, request.PhoneNumber)
+	} else if request.Type == 3 {
+		allNumbers, _ := userRepository.GetNumberListByOrganizationID(0)
+		request.Numbers = allNumbers
+	}
+	ok, _, err := request.SendSMS()
 	if err != nil {
-		fmt.Println(msg)
 		fmt.Println(err.Error())
 		ok = false
 	}
-	err = messageRepository.SendSMS(&request, staff.UserID, staff.OrganizationID, ok)
+	organizationID := staff.OrganizationID
+	if request.OrganizationID != 0 {
+		organizationID = request.OrganizationID
+	}
+	err = messageRepository.SendSMS(&request, staff.UserID, organizationID, ok)
 	if err != nil {
 		c.JSON(500, err.Error())
 		return

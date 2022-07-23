@@ -7,15 +7,17 @@ import (
 
 type SendSMSRequest struct {
 	UserID         uint64   `json:"user_id"`
-	Number         []string `json:"numbers"`
+	Numbers        []string `json:"numbers"`
+	PhoneNumber    string   `json:"phone_number"`
 	Msg            string   `json:"msg"`
+	Type           uint     `json:"type"`
 	OrganizationID uint64   `json:"organization_id"`
 }
 
 func (s *SendSMSRequest) SendSMS() (bool, *string, error) {
 	var receptor []string
-	for i := 0; i < len(s.Number); i++ {
-		n := helpers.NormalizePhoneNumber(s.Number[i])
+	for i := 0; i < len(s.Numbers); i++ {
+		n := helpers.NormalizePhoneNumber(s.Numbers[i])
 		if n != "" {
 			receptor = append(receptor, n)
 		}

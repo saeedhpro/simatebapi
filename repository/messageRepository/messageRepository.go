@@ -79,20 +79,20 @@ func DeleteMessages(ids []uint64) error {
 	return repository.DB.MySQL.Delete(&models.SmsModel{}, ids).Error
 }
 
-func SendSMS(request *requests.SendSMSRequest, staffID uint64, staffOrganizationID uint64, send bool) error {
+func SendSMS(request *requests.SendSMSRequest, staffID uint64, organizationID uint64, send bool) error {
 	var numbers []string
 	var smsList []models.SmsModel
-	for i := 0; i < len(request.Number); i++ {
-		n := helpers.NormalizePhoneNumber(request.Number[i])
+	for i := 0; i < len(request.Numbers); i++ {
+		n := helpers.NormalizePhoneNumber(request.Numbers[i])
 		if n != "" {
 			user, _ := userRepository.GetUserBy(&models.UserModel{
-				Tel: request.Number[i],
+				Tel: request.Numbers[i],
 			})
 			if user != nil {
 				now := time.Now()
 				sms := models.SmsModel{
 					UserID:         user.ID,
-					OrganizationID: staffOrganizationID,
+					OrganizationID: organizationID,
 					StaffID:        staffID,
 					Incoming:       true,
 					Msg:            request.Msg,
