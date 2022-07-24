@@ -135,6 +135,7 @@ func SaveImageToDisk(location string, names []string, data string) (string, stri
 		fmt.Println(err.Error(), "cf")
 		return "", "", fmt.Errorf("cant save file")
 	}
+	fmt.Println(fileName, "uploaded")
 	return fileName, name, err
 }
 
