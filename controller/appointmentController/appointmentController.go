@@ -8,11 +8,13 @@ import (
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/token"
+	"github.com/saeedhpro/apisimateb/repository"
 	"github.com/saeedhpro/apisimateb/repository/appointmentRepository"
 	"github.com/saeedhpro/apisimateb/repository/caseTypeRepository"
 	"github.com/saeedhpro/apisimateb/repository/organizationRepository"
 	"gorm.io/gorm"
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -29,9 +31,14 @@ type AppointmentControllerInterface interface {
 	FilterOrganizationAppointment(c *gin.Context)
 	GetQueList(c *gin.Context)
 	AcceptAppointment(c *gin.Context)
+	AcceptedAppointment(c *gin.Context)
+	CanceledAppointment(c *gin.Context)
 	UpdateAppointment(c *gin.Context)
 	CancelAppointment(c *gin.Context)
 	ReserveAppointment(c *gin.Context)
+	DeleteAppointments(c *gin.Context)
+	AddAppointmentResults(c *gin.Context)
+	CreateAppointmentAppCode(c *gin.Context)
 }
 
 type AppointmentControllerStruct struct {
@@ -350,6 +357,85 @@ func (u *AppointmentControllerStruct) AcceptAppointment(c *gin.Context) {
 	return
 }
 
+func (u *AppointmentControllerStruct) AcceptedAppointment(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if organization.IsDoctor() || !(appointment.PhotographyID == organization.ID || appointment.LaboratoryID == organization.ID || appointment.RadiologyID == organization.ID) {
+		c.JSON(403, "access denied")
+		return
+	}
+	staff := token.GetStaffUser(c).OrganizationID
+	staffOrg, _ := organizationRepository.GetOrganizationByID(staff)
+	if staffOrg.IsPhotography() {
+		t := time.Now()
+		appointment.PAdmissionAt = &t
+	} else if staffOrg.IsLaboratory() {
+		t := time.Now()
+		appointment.LAdmissionAt = &t
+	} else if staffOrg.IsRadiology() {
+		t := time.Now()
+		appointment.RAdmissionAt = &t
+	}
+	response, err := appointmentRepository.AcceptedAppointment(appointment)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, response)
+	return
+}
+
+func (u *AppointmentControllerStruct) CanceledAppointment(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if organization.IsDoctor() || !(appointment.PhotographyID == organization.ID || appointment.LaboratoryID == organization.ID || appointment.RadiologyID == organization.ID) {
+		c.JSON(403, "access denied")
+		return
+	}
+	staff := token.GetStaffUser(c).OrganizationID
+	staffOrg, _ := organizationRepository.GetOrganizationByID(staff)
+	if staffOrg.IsPhotography() {
+		appointment.PAdmissionAt = nil
+	} else if staffOrg.IsLaboratory() {
+		appointment.LAdmissionAt = nil
+	} else if staffOrg.IsRadiology() {
+		appointment.RAdmissionAt = nil
+	}
+	response, err := appointmentRepository.CanceledAppointment(appointment)
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, response)
+	return
+}
+
 func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
@@ -385,7 +471,7 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 			t := time.Now().Format("2006-01-02 15:04:05")
 			request.PResultAt = &t
 			if appointment.PRndImg == "" {
-				rand := helpers.RandomString(6)
+				rand := helpers.RandomString(5)
 				request.PRndImg = rand
 			} else {
 				request.PRndImg = appointment.PRndImg
@@ -395,7 +481,7 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 			t := time.Now().Format("2006-01-02 15:04:05")
 			request.LResultAt = &t
 			if appointment.LRndImg == "" {
-				rand := helpers.RandomString(6)
+				rand := helpers.RandomString(5)
 				request.LRndImg = rand
 			} else {
 				request.LRndImg = appointment.LRndImg
@@ -405,7 +491,7 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 			t := time.Now().Format("2006-01-02 15:04:05")
 			request.RResultAt = &t
 			if appointment.RRndImg == "" {
-				rand := helpers.RandomString(6)
+				rand := helpers.RandomString(5)
 				request.RRndImg = rand
 			} else {
 				request.RRndImg = appointment.RRndImg
@@ -438,6 +524,138 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 		}
 	}
 	c.JSON(200, response)
+	return
+}
+
+func (u *AppointmentControllerStruct) AddAppointmentResults(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	var request requests.AddAppointmentResultsRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		if err != nil {
+			c.JSON(422, "request bind error")
+			return
+		}
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if !appointment.CanUpdate(organization) {
+		c.JSON(403, "access denied")
+		return
+	}
+	rand := ""
+	staff := token.GetStaffUser(c).OrganizationID
+	staffOrg, _ := organizationRepository.GetOrganizationByID(staff)
+	tx := repository.DB.MySQL.Begin()
+	if len(request.Results) > 0 {
+		t := time.Now()
+		if staffOrg.IsPhotography() {
+			appointment.PResultAt = &t
+			if appointment.PRndImg == "" {
+				rand = helpers.RandomString(5)
+				appointment.PRndImg = rand
+			} else {
+				rand = appointment.PRndImg
+			}
+		} else if staffOrg.IsLaboratory() {
+			appointment.LResultAt = &t
+			if appointment.LRndImg == "" {
+				rand = helpers.RandomString(5)
+				appointment.LRndImg = rand
+			} else {
+				rand = appointment.LRndImg
+			}
+		} else if staffOrg.IsRadiology() {
+			appointment.RResultAt = &t
+			if appointment.RRndImg == "" {
+				rand = helpers.RandomString(5)
+				appointment.RRndImg = rand
+			} else {
+				rand = appointment.RRndImg
+			}
+		}
+	}
+	_, err = appointmentRepository.AddAppointmentResults(appointment)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(500, err.Error())
+		return
+	}
+	var nameList []string
+	if len(request.Results) > 0 {
+		for i := 0; i < len(request.Results); i++ {
+			location := fmt.Sprintf("./res/img/result/%d/%s", appointment.ID, rand)
+			files, err := ioutil.ReadDir(location)
+			if err != nil {
+				if os.IsNotExist(err) {
+					err = os.MkdirAll(location, os.ModePerm)
+					if err != nil {
+						fmt.Println(err.Error())
+					}
+				}
+			}
+			names := []string{}
+			for i := 0; i < len(files); i++ {
+				names = append(names, files[i].Name())
+			}
+			fileName, _, _ := helpers.SaveImageToDisk(location, names, request.Results[i])
+			nameList = append(nameList, fileName)
+		}
+	}
+	tx.Commit()
+	c.JSON(200, nameList)
+	return
+}
+
+func (u *AppointmentControllerStruct) CreateAppointmentAppCode(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if !appointment.CanUpdate(organization) {
+		c.JSON(403, "access denied")
+		return
+	}
+	rand := helpers.RandomIntString(6)
+	for {
+		app, _ := appointmentRepository.GetAppointmentBy(&models.AppointmentModel{Appcode: rand})
+		if app == nil {
+			break
+		}
+		rand = helpers.RandomIntString(6)
+	}
+	appointment.Appcode = rand
+	tx := repository.DB.MySQL.Begin()
+	_, err = appointmentRepository.CreateAppointmentAppCode(appointment)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(500, err.Error())
+		return
+	}
+	tx.Commit()
+	c.JSON(200, rand)
 	return
 }
 
@@ -496,5 +714,21 @@ func (u *AppointmentControllerStruct) ReserveAppointment(c *gin.Context) {
 		return
 	}
 	c.JSON(200, response)
+	return
+}
+
+func (u *AppointmentControllerStruct) DeleteAppointments(c *gin.Context) {
+	var request requests.UserListDeleteRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err.Error(), "bind")
+		c.JSON(500, err.Error())
+		return
+	}
+	response, err := appointmentRepository.DeleteAppointmentListByID(request.IDs)
+	if err != nil {
+		c.JSON(500, response)
+		return
+	}
+	c.JSON(200, nil)
 	return
 }

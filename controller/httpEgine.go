@@ -89,12 +89,17 @@ func Run(Port string) {
 	{
 		appointments.GET("/que", middleware.GinJwtAuth(appointmentCont.GetQueList, true, false))
 		appointments.GET("/search", middleware.GinJwtAuth(appointmentCont.FilterOrganizationAppointment, true, false))
+		appointments.POST("/delete", middleware.GinJwtAuth(appointmentCont.DeleteAppointments, true, false))
 		appointments.GET("/:id", middleware.GinJwtAuth(appointmentCont.GetAppointment, true, false))
 		appointments.PUT("/:id", middleware.GinJwtAuth(appointmentCont.UpdateAppointment, true, false))
 		appointments.GET("/:id/results", middleware.GinJwtAuth(appointmentCont.GetAppointmentResults, true, false))
 		appointments.POST("/:id/accept", middleware.GinJwtAuth(appointmentCont.AcceptAppointment, true, false))
+		appointments.POST("/:id/accepted", middleware.GinJwtAuth(appointmentCont.AcceptedAppointment, true, false))
+		appointments.POST("/:id/canceled", middleware.GinJwtAuth(appointmentCont.CanceledAppointment, true, false))
 		appointments.POST("/:id/cancel", middleware.GinJwtAuth(appointmentCont.CancelAppointment, true, false))
 		appointments.POST("/:id/reserve", middleware.GinJwtAuth(appointmentCont.ReserveAppointment, true, false))
+		appointments.POST("/:id/result", middleware.GinJwtAuth(appointmentCont.AddAppointmentResults, true, false))
+		appointments.POST("/:id/code", middleware.GinJwtAuth(appointmentCont.CreateAppointmentAppCode, true, false))
 	}
 	{
 		v1.POST("/files", middleware.GinJwtAuth(fileCont.CreateFile, true, false))

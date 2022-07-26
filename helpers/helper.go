@@ -72,6 +72,7 @@ func TimeDiff(a, b time.Time) (year, month, day, hour, min, sec int) {
 }
 
 const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const intCharset = "0123456789"
 
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
@@ -86,6 +87,10 @@ func StringWithCharset(length int, charset string) string {
 
 func RandomString(length int) string {
 	return StringWithCharset(length, charset)
+}
+
+func RandomIntString(length int) string {
+	return StringWithCharset(length, intCharset)
 }
 
 func ItemExists(arrayType interface{}, item interface{}) bool {

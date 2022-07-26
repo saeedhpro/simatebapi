@@ -74,6 +74,86 @@ func GetLastOnlinePatients() ([]models.UserModel, error) {
 	return users, nil
 }
 
+func GetOrganizationUserListBy(conditions *models.UserModel, q string, organization *models.OrganizationModel) ([]models.UserModel, error) {
+	users := []models.UserModel{}
+	query := repository.DB.MySQL.Preload("Organization").Preload("Staff").Preload("UserGroup")
+	if q != "" {
+		query = query.Where(repository.DB.MySQL.
+			Where("fname LIKE ?", "%"+q+"%").
+			Or("lname LIKE ?", "%"+q+"%").
+			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
+	}
+	err := query.Find(&users, &conditions).Error
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(users); i++ {
+		if users[i].BirthDate != nil {
+			year, _, _, _, _, _ := helpers.TimeDiff(*users[i].BirthDate, time.Now())
+			users[i].Age = year
+		}
+	}
+	return users, nil
+}
+
+func GetPaginatedOrganizationUserListBy(conditions *models.UserModel, q string, organization *models.OrganizationModel, page int, limit int) (pagination.Pagination, error) {
+	users := []models.UserModel{}
+	paginate := pagination.Pagination{
+		Page:  page,
+		Limit: limit,
+	}
+	var count int64 = 0
+	query := repository.DB.MySQL
+	if q != "" {
+		query = query.Where(repository.DB.MySQL.
+			Where("fname LIKE ?", "%"+q+"%").
+			Or("lname LIKE ?", "%"+q+"%").
+			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
+	}
+	if !organization.IsDoctor() {
+		q2 := repository.DB.MySQL.Model(models.AppointmentModel{})
+		if organization.IsPhotography() {
+			q2 = q2.Where("appointment.photography_id = ? ", organization.ID)
+		} else if organization.IsLaboratory() {
+			q2 = q2.Where("appointment.laboratory_id = ? ", organization.ID)
+		} else if organization.IsRadiology() {
+			q2 = q2.Where("appointment.radiology_id = ? ", organization.ID)
+		}
+		query = query.Where("id in (?)", q2.Select("user_id"))
+	}
+	query.Find(&users, &conditions).Count(&count)
+	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Staff").Preload("UserGroup")
+	if q != "" {
+		query = query.Where(repository.DB.MySQL.
+			Where("fname LIKE ?", "%"+q+"%").
+			Or("lname LIKE ?", "%"+q+"%").
+			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
+	}
+	if !organization.IsDoctor() {
+		q2 := repository.DB.MySQL.Model(models.AppointmentModel{})
+		if organization.IsPhotography() {
+			q2 = q2.Where("appointment.photography_id = ? ", organization.ID)
+		} else if organization.IsLaboratory() {
+			q2 = q2.Where("appointment.laboratory_id = ? ", organization.ID)
+		} else if organization.IsRadiology() {
+			q2 = q2.Where("appointment.radiology_id = ? ", organization.ID)
+		}
+		query = query.Where("id in (?)", q2.Select("user_id"))
+	}
+	err := query.Find(&users, &conditions).Error
+	if err != nil {
+		return paginate, err
+	}
+	for i := 0; i < len(users); i++ {
+		if users[i].BirthDate != nil {
+			year, _, _, _, _, _ := helpers.TimeDiff(*users[i].BirthDate, time.Now())
+			users[i].Age = year
+		}
+	}
+	paginate.Data = users
+	return paginate, nil
+}
+
 func GetUserListBy(conditions *models.UserModel, q string) ([]models.UserModel, error) {
 	users := []models.UserModel{}
 	query := repository.DB.MySQL.Preload("Organization").Preload("Staff").Preload("UserGroup")

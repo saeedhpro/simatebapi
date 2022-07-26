@@ -8,6 +8,7 @@ import (
 	"github.com/saeedhpro/apisimateb/helpers/token"
 	"github.com/saeedhpro/apisimateb/repository"
 	"github.com/saeedhpro/apisimateb/repository/countyRepository"
+	"github.com/saeedhpro/apisimateb/repository/organizationRepository"
 	"github.com/saeedhpro/apisimateb/repository/provinceRepository"
 	"github.com/saeedhpro/apisimateb/repository/userRepository"
 	"gorm.io/gorm"
@@ -48,21 +49,24 @@ func (u *UserControllerStruct) GetOrganizationUsersList(c *gin.Context) {
 	userGroupID, _ := strconv.Atoi(c.Query("group"))
 	q := c.Query("q")
 	staff := token.GetStaffUser(c)
-	filter := models.UserModel{
-		OrganizationID: staff.OrganizationID,
+	organization, _ := organizationRepository.GetOrganizationByID(staff.OrganizationID)
+	filter := models.UserModel{}
+	isDoctor := organization.IsDoctor()
+	if isDoctor {
+		filter.OrganizationID = organization.ID
 	}
 	if userGroupID > 0 {
 		filter.UserGroupID = uint64(userGroupID)
 	}
 	if page < 1 {
-		response, _ := userRepository.GetUserListBy(&filter, q)
+		response, _ := userRepository.GetOrganizationUserListBy(&filter, q, organization)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := userRepository.GetPaginatedUserListBy(&filter, q, page, limit)
+	response, _ := userRepository.GetPaginatedOrganizationUserListBy(&filter, q, organization, page, limit)
 	c.JSON(200, response)
 	return
 }

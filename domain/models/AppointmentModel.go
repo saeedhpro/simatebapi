@@ -48,6 +48,7 @@ type AppointmentModel struct {
 	PImgs              int                `json:"p_imgs" gorm:"p_imgs"`
 	RImgs              int                `json:"r_imgs" gorm:"r_imgs"`
 	Code               string             `json:"code" gorm:"code"`
+	Appcode            string             `json:"appcode" gorm:"appcode"`
 	IsVip              bool               `json:"is_vip" gorm:"is_vip"`
 	VipIntroducer      uint64             `json:"vip_introducer" gorm:"vip_introducer"`
 }

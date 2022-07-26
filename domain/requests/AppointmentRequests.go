@@ -50,3 +50,8 @@ type AppointmentUpdateRequest struct {
 	VipIntroducer      uint64   `json:"vip_introducer"`
 	Results            []string `json:"results"`
 }
+
+type AddAppointmentResultsRequest struct {
+	ID      uint64   `json:"id"`
+	Results []string `json:"results"`
+}

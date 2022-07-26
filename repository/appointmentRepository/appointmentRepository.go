@@ -136,6 +136,15 @@ func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, q string
 	}
 	query.Find(&appointments, &conditions).Count(&count)
 	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User")
+	if q != "" {
+		query = query.
+			Joins("left join (select id, fname, lname from user) user on appointment.user_id = user.id").
+			Where(repository.DB.MySQL.
+				Where("fname LIKE ?", "%"+q+"%").
+				Or("lname LIKE ?", "%"+q+"%").
+				Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%").
+				Or("code LIKE ?", "%"+q+"%"))
+	}
 	if !isDoctor {
 		if !needResult {
 			if conditions.Photography != nil {
@@ -218,10 +227,19 @@ func FilterOrganizationAppointment(organizationID uint64, status []string, q str
 		if err == nil {
 			if organization.IsPhotography() {
 				query = query.
-					Where("photography_id", organizationID)
+					Where("photography_id", organizationID).
+					Where("status = 2")
+				//Where("p_admission_at IS NOT NULL")
 			} else if organization.IsRadiology() {
 				query = query.
-					Where("radiology_id", organizationID)
+					Where("radiology_id", organizationID).
+					Where("status = 2")
+				//Where("r_admission_at IS NOT NULL")
+			} else if organization.IsLaboratory() {
+				query = query.
+					Where("laboratory_id", organizationID).
+					Where("status = 2")
+				//Where("l_admission_at IS NOT NULL")
 			}
 		}
 	}
@@ -346,6 +364,29 @@ func AcceptAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	return true, nil
 }
 
+func AcceptedAppointment(appointment *models.AppointmentModel) (bool, error) {
+	appointment.Status = 2
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func CanceledAppointment(appointment *models.AppointmentModel) (bool, error) {
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error) {
 	appointment := models.AppointmentModel{}
 	appointment.ID = request.ID
@@ -399,6 +440,28 @@ func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	return true, nil
 }
 
+func AddAppointmentResults(appointment *models.AppointmentModel) (bool, error) {
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func CreateAppointmentAppCode(appointment *models.AppointmentModel) (bool, error) {
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Updates(&appointment).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func CancelAppointment(appointment *models.AppointmentModel) (bool, error) {
 	appointment.Status = 3
 	appointment.Organization = nil
@@ -419,6 +482,14 @@ func ReserveAppointment(appointment *models.AppointmentModel) (bool, error) {
 		Model(&appointment).
 		Updates(&appointment).
 		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func DeleteAppointmentListByID(IDs []uint64) (bool, error) {
+	err := repository.DB.MySQL.Where("id IN ?", IDs).Delete(&models.AppointmentModel{}).Error
 	if err != nil {
 		return false, err
 	}
