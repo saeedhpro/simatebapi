@@ -1,6 +1,7 @@
 package messageRepository
 
 import (
+	"fmt"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers"
@@ -88,6 +89,11 @@ func SendSMS(request *requests.SendSMSRequest, staffID uint64, organizationID ui
 			user, _ := userRepository.GetUserBy(&models.UserModel{
 				Tel: request.Numbers[i],
 			})
+			if user == nil {
+				user, _ = userRepository.GetUserBy(&models.UserModel{
+					Tel: fmt.Sprintf("0%s", request.Numbers[i][3:]),
+				})
+			}
 			if user != nil {
 				now := time.Now()
 				sms := models.SmsModel{

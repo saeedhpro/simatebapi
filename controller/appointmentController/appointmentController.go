@@ -233,7 +233,6 @@ func (u *AppointmentControllerStruct) GetUserAppointmentList(c *gin.Context) {
 	filter := models.AppointmentModel{
 		UserID: uint64(userID),
 	}
-	isDoctor := false
 	if organization.IsPhotography() {
 		filter.PhotographyID = organization.ID
 		filter.Photography = organization
@@ -246,17 +245,17 @@ func (u *AppointmentControllerStruct) GetUserAppointmentList(c *gin.Context) {
 	} else {
 		filter.OrganizationID = organization.ID
 		filter.Organization = organization
-		isDoctor = true
 	}
+	isDoctor := organization.IsDoctor()
 	if page < 1 {
-		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "", "", isDoctor, true)
+		response, _ := appointmentRepository.GetAppointmentListBy(&filter, "", "", "", isDoctor, !isDoctor)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", "", isDoctor, true, page, limit)
+	response, _ := appointmentRepository.GetPaginatedAppointmentListBy(&filter, "", "", "", isDoctor, !isDoctor, page, limit)
 	c.JSON(200, response)
 	return
 }

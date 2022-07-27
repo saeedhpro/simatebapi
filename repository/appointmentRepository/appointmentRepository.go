@@ -109,22 +109,29 @@ func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, q string
 				Or("code LIKE ?", "%"+q+"%"))
 	}
 	if !isDoctor {
-		if !needResult {
-			if conditions.Photography != nil {
-				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
-			} else if conditions.Radiology != nil {
-				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
-			} else if conditions.Laboratory != nil {
-				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
-			}
-		} else {
-			if conditions.Photography != nil {
-				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
-			} else if conditions.Radiology != nil {
-				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
-			} else if conditions.Laboratory != nil {
-				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NOT NULL and status = 2")
-			}
+		//if !needResult {
+		//	if conditions.Photography != nil {
+		//		query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
+		//	} else if conditions.Radiology != nil {
+		//		query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
+		//	} else if conditions.Laboratory != nil {
+		//		query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
+		//	}
+		//} else {
+		//	if conditions.Photography != nil {
+		//		query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
+		//	} else if conditions.Radiology != nil {
+		//		query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
+		//	} else if conditions.Laboratory != nil {
+		//		query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NOT NULL and status = 2")
+		//	}
+		//}
+		if conditions.Photography != nil {
+			query = query.Where("p_admission_at IS NOT NULL and status = 2")
+		} else if conditions.Radiology != nil {
+			query = query.Where("r_admission_at IS NOT NULL and status = 2")
+		} else if conditions.Laboratory != nil {
+			query = query.Where("l_admission_at IS NOT NULL and status = 2")
 		}
 	} else {
 		if start != "" {
@@ -146,22 +153,12 @@ func GetPaginatedAppointmentListBy(conditions *models.AppointmentModel, q string
 				Or("code LIKE ?", "%"+q+"%"))
 	}
 	if !isDoctor {
-		if !needResult {
-			if conditions.Photography != nil {
-				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NULL and status = 2")
-			} else if conditions.Radiology != nil {
-				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NULL and status = 2")
-			} else if conditions.Laboratory != nil {
-				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NULL and status = 2")
-			}
-		} else {
-			if conditions.Photography != nil {
-				query = query.Where("p_admission_at IS NOT NULL and p_result_at IS NOT NULL and status = 2")
-			} else if conditions.Radiology != nil {
-				query = query.Where("r_admission_at IS NOT NULL and r_result_at IS NOT NULL and status = 2")
-			} else if conditions.Laboratory != nil {
-				query = query.Where("l_admission_at IS NOT NULL and l_result_at IS NOT NULL and status = 2")
-			}
+		if conditions.Photography != nil {
+			query = query.Where("p_admission_at IS NOT NULL and status = 2")
+		} else if conditions.Radiology != nil {
+			query = query.Where("r_admission_at IS NOT NULL and status = 2")
+		} else if conditions.Laboratory != nil {
+			query = query.Where("l_admission_at IS NOT NULL and status = 2")
 		}
 	} else {
 		if start != "" {
