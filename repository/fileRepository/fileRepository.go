@@ -65,6 +65,20 @@ func CreateFile(request *requests.FileCreateRequest) (*models.FileModel, error) 
 	return &file, nil
 }
 
+func UpdateFile(request *requests.FileCreateRequest) (*models.FileModel, error) {
+	file := models.FileModel{
+		Comment: request.Comment,
+		Info:    request.Info,
+	}
+	err := repository.DB.MySQL.
+		Create(&file).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	return &file, nil
+}
+
 func DeleteFileBy(conditions *models.FileModel) (bool, error) {
 	err := repository.DB.MySQL.Delete(&conditions, &conditions).Error
 	if err != nil {

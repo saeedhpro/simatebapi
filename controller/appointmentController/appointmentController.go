@@ -190,14 +190,14 @@ func (u *AppointmentControllerStruct) FilterOrganizationAppointment(c *gin.Conte
 	if status != "" {
 		statues = strings.Split(status, ",")
 	}
-	organizationID := token.GetStaffUser(c).OrganizationID
+	organization, _ := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
 	if page < 1 {
 		page = 1
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := appointmentRepository.FilterOrganizationAppointment(organizationID, statues, q, start, end, false, page, limit)
+	response, _ := appointmentRepository.FilterOrganizationAppointment(organization.ID, statues, q, start, end, organization.IsDoctor(), page, limit)
 	c.JSON(200, response)
 }
 
@@ -288,7 +288,6 @@ func (u *AppointmentControllerStruct) GetUserResultedAppointmentList(c *gin.Cont
 			filter.Radiology = organization
 		}
 	}
-	fmt.Println(filter.Radiology)
 	if page < 1 {
 		response, _ := appointmentRepository.GetResultedAppointmentListBy(&filter, t)
 		c.JSON(200, response)

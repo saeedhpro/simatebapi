@@ -218,7 +218,7 @@ func FilterOrganizationAppointment(organizationID uint64, status []string, q str
 		Preload("User")
 	if isDoctor {
 		query = query.
-			Where("organization_id", organizationID)
+			Where("organization_id = ?", organizationID)
 	} else {
 		organization, err := organizationRepository.GetOrganizationByID(organizationID)
 		if err == nil {
@@ -262,7 +262,7 @@ func FilterOrganizationAppointment(organizationID uint64, status []string, q str
 	}
 	var count int64 = 0
 	query.Find(&appointments).Count(&count)
-	err := query.Scopes(pagination.PaginateScope(count, &paginate)).Order("id asc").Find(&appointments).Error
+	err := query.Scopes(pagination.PaginateScope(count, &paginate)).Order("created_at desc").Find(&appointments).Error
 	if err != nil {
 		fmt.Println(err.Error())
 		return paginate, err

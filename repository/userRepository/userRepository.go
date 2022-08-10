@@ -297,8 +297,9 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 	if request.BirthDate != "" {
 		birthDate, err := time.Parse("2006-01-02", request.BirthDate)
 		if err == nil {
-			fmt.Println(err.Error())
 			user.BirthDate = &birthDate
+		} else {
+			fmt.Println(err.Error())
 		}
 	}
 	if request.Pass != "" {
@@ -339,8 +340,9 @@ func UpdateUser(request *requests.UserUpdateRequest) error {
 	if request.BirthDate != "" {
 		birthDate, err := time.Parse("2006-01-02", request.BirthDate)
 		if err == nil {
-			fmt.Println(err.Error())
 			user.BirthDate = &birthDate
+		} else {
+			fmt.Println(err.Error())
 		}
 	}
 	err := repository.DB.MySQL.

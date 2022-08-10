@@ -21,6 +21,7 @@ import (
 type FileControllerInterface interface {
 	GetUserFileList(c *gin.Context)
 	CreateFile(c *gin.Context)
+	UpdateFile(c *gin.Context)
 	DeleteFile(c *gin.Context)
 }
 
@@ -83,6 +84,21 @@ func (f FileControllerStruct) CreateFile(c *gin.Context) {
 	_ = repository.DB.MySQL.Find(&user, &user).Error
 	file.Staff = user
 	file.Path = fmt.Sprintf("http://%s/file/%s/1.%s", c.Request.Host, file.Path, file.Ext)
+	c.JSON(200, response)
+	return
+}
+
+func (f FileControllerStruct) UpdateFile(c *gin.Context) {
+	var request requests.FileCreateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(422, err.Error())
+		return
+	}
+	response, err := fileRepository.UpdateFile(&request)
+	if err != nil {
+		c.JSON(500, response)
+		return
+	}
 	c.JSON(200, response)
 	return
 }

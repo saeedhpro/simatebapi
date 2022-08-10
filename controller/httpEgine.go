@@ -13,6 +13,7 @@ import (
 	"github.com/saeedhpro/apisimateb/controller/medicalHistoryController"
 	"github.com/saeedhpro/apisimateb/controller/messageController"
 	"github.com/saeedhpro/apisimateb/controller/organizationController"
+	"github.com/saeedhpro/apisimateb/controller/paymentController"
 	"github.com/saeedhpro/apisimateb/controller/provinceController"
 	"github.com/saeedhpro/apisimateb/controller/scheduleController"
 	"github.com/saeedhpro/apisimateb/controller/userController"
@@ -42,6 +43,7 @@ func Run(Port string) {
 	messageCont := messageController.NewMessageController()
 	medicalHistoryCont := medicalHistoryController.NewMedicalHistoryController()
 	scheduleCont := scheduleController.NewScheduleController()
+	paymentCont := paymentController.NewPaymentController()
 
 	v1.POST("/auth/login", authCont.Login)
 	v1.GET("/own", middleware.GinJwtAuth(userCont.Own, true, false))
@@ -56,6 +58,7 @@ func Run(Port string) {
 	cases := v1.Group("/cases")
 	admin := v1.Group("/admin")
 	messages := v1.Group("/messages")
+	payments := v1.Group("/payments")
 
 	{
 		organizations.GET("/type", middleware.GinJwtAuth(organizationCont.GetOrganizationByType, true, false))
@@ -85,6 +88,8 @@ func Run(Port string) {
 		users.GET("/:id/appointments/resulted", middleware.GinJwtAuth(appointmentCont.GetUserResultedAppointmentList, true, false))
 		users.GET("/:id/histories", middleware.GinJwtAuth(medicalHistoryCont.GetUserMedicalHistory, true, false))
 		users.POST("/:id/histories", middleware.GinJwtAuth(medicalHistoryCont.CreateUserMedicalHistory, true, false))
+		users.GET("/:id/payments", middleware.GinJwtAuth(paymentCont.GetUserPayments, true, false))
+		users.GET("/:id/payments/total", middleware.GinJwtAuth(paymentCont.GetUserPaymentsTotal, true, false))
 	}
 	{
 		appointments.GET("/que", middleware.GinJwtAuth(appointmentCont.GetQueList, true, false))
@@ -103,6 +108,7 @@ func Run(Port string) {
 	}
 	{
 		v1.POST("/files", middleware.GinJwtAuth(fileCont.CreateFile, true, false))
+		files.PUT("/:id", middleware.GinJwtAuth(fileCont.UpdateFile, true, false))
 		files.GET("/:id", middleware.GinJwtAuth(fileCont.GetUserFileList, true, false))
 		files.DELETE("/:id", middleware.GinJwtAuth(fileCont.DeleteFile, true, false))
 	}
@@ -110,6 +116,10 @@ func Run(Port string) {
 		provinces.GET("", middleware.GinJwtAuth(provinceCont.GetProvinceList, true, false))
 		provinces.GET("/:id", middleware.GinJwtAuth(provinceCont.GetProvince, true, false))
 		provinces.GET("/:id/counties", middleware.GinJwtAuth(countyCont.GetCountyList, true, false))
+	}
+	{
+		v1.POST("/payments", middleware.GinJwtAuth(paymentCont.CreatePayment, true, false))
+		payments.POST("/delete", middleware.GinJwtAuth(paymentCont.DeletePayments, true, false))
 	}
 	{
 		counties.GET("/:id", middleware.GinJwtAuth(countyCont.GetCounty, true, false))
