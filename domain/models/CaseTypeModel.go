@@ -5,7 +5,7 @@ type CaseType struct {
 	Name           string             `json:"name" gorm:"name,index"`
 	Limitation     uint64             `json:"limitation" gorm:"limitation"`
 	Duration       uint64             `json:"duration" gorm:"duration"`
-	IsLimited      bool               `json:"is_limited" gorm:"is_limited"`
+	IsLimited      int                `json:"is_limited" gorm:"is_limited"`
 	OrganizationID uint64             `json:"organization_id" gorm:"organization_id"`
 	Organization   *OrganizationModel `json:"organization" gorm:"ForeignKey:OrganizationID"`
 }

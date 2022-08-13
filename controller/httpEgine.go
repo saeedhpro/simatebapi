@@ -70,6 +70,7 @@ func Run(Port string) {
 		organizations.GET("/cases", middleware.GinJwtAuth(caseCont.GetOrganizationCaseTypeList, true, false))
 		organizations.POST("/cases", middleware.GinJwtAuth(caseCont.CreateCaseType, true, false))
 		organizations.GET("/schedules", middleware.GinJwtAuth(scheduleCont.GetOrganizationScheduleList, true, false))
+		organizations.POST("/schedules", middleware.GinJwtAuth(scheduleCont.CreateOrganizationSchedule, true, false))
 		organizations.GET("/:id", middleware.GinJwtAuth(organizationCont.Get, true, false))
 		organizations.PUT("/:id/about", middleware.GinJwtAuth(organizationCont.UpdateOrganizationAbout, true, false))
 		organizations.GET("/:id/users", middleware.GinJwtAuth(userCont.GetOrganizationPatientList, true, false))

@@ -460,11 +460,9 @@ func CreateAppointmentAppCode(appointment *models.AppointmentModel) (bool, error
 }
 
 func CancelAppointment(appointment *models.AppointmentModel) (bool, error) {
-	appointment.Status = 3
-	appointment.Organization = nil
 	err := repository.DB.MySQL.
 		Model(&appointment).
-		Updates(&appointment).
+		Update("Status", 3).
 		Error
 	if err != nil {
 		return false, err
@@ -473,11 +471,9 @@ func CancelAppointment(appointment *models.AppointmentModel) (bool, error) {
 }
 
 func ReserveAppointment(appointment *models.AppointmentModel) (bool, error) {
-	appointment.Status = 1
-	appointment.Organization = nil
 	err := repository.DB.MySQL.
 		Model(&appointment).
-		Updates(&appointment).
+		Update("Status", 1).
 		Error
 	if err != nil {
 		return false, err

@@ -1,6 +1,7 @@
 package caseTypeRepository
 
 import (
+	"fmt"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers/pagination"
@@ -53,11 +54,15 @@ func GetPaginatedCaseTypeListBy(conditions *models.CaseType, page int, limit int
 }
 
 func CreateCaseType(request *requests.CreateCaseTypeRequest) error {
+	var IsLimited = 0
+	if request.IsLimited {
+		IsLimited = 1
+	}
 	caseType := models.CaseType{
 		OrganizationID: request.OrganizationID,
 		Name:           request.Name,
 		Duration:       request.Duration,
-		IsLimited:      request.IsLimited,
+		IsLimited:      IsLimited,
 		Limitation:     request.Limitation,
 	}
 	err := repository.DB.MySQL.Create(caseType).Error
@@ -68,9 +73,13 @@ func CreateCaseType(request *requests.CreateCaseTypeRequest) error {
 }
 
 func UpdateCaseType(id uint64, request *requests.CreateCaseTypeRequest) error {
+	var IsLimited = 0
+	if request.IsLimited {
+		IsLimited = 1
+	}
 	caseType := models.CaseType{
 		ID:             id,
-		IsLimited:      request.IsLimited,
+		IsLimited:      IsLimited,
 		Limitation:     request.Limitation,
 		Duration:       request.Duration,
 		OrganizationID: request.OrganizationID,
@@ -78,9 +87,16 @@ func UpdateCaseType(id uint64, request *requests.CreateCaseTypeRequest) error {
 	}
 	err := repository.DB.MySQL.
 		Model(&caseType).
-		Updates(caseType).
+		Updates(map[string]interface{}{
+			"IsLimited":      IsLimited,
+			"Limitation":     request.Limitation,
+			"Duration":       request.Duration,
+			"OrganizationID": request.OrganizationID,
+			"Name":           request.Name,
+		}).
 		Error
 	if err != nil {
+		fmt.Println(err.Error())
 		return err
 	}
 	return nil
