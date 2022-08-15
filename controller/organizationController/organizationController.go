@@ -50,18 +50,18 @@ func (o *OrganizationControllerStruct) Get(c *gin.Context) {
 	}
 	route := fmt.Sprintf("img/org/%d/%s.jpg", response.ID, response.Logo)
 	response.Logo = fmt.Sprintf("http://%s/%s", c.Request.Host, route)
-	//if response.Image1 != "" {
-	//	response.Image1 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image1)
-	//}
-	//if response.Image2 != "" {
-	//	response.Image2 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image2)
-	//}
-	//if response.Image3 != "" {
-	//	response.Image3 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image3)
-	//}
-	//if response.Image4 != "" {
-	//	response.Image4 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image4)
-	//}
+	if response.Image1 != "" {
+		response.Image1 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image1)
+	}
+	if response.Image2 != "" {
+		response.Image2 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image2)
+	}
+	if response.Image3 != "" {
+		response.Image3 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image3)
+	}
+	if response.Image4 != "" {
+		response.Image4 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image4)
+	}
 	c.JSON(200, response)
 }
 
@@ -209,19 +209,19 @@ func (o *OrganizationControllerStruct) UpdateOrganizationAbout(c *gin.Context) {
 	}
 	if request.New2 != "" {
 		_, _, err = helpers.SaveImageToDiskByName(location, request.New2, "1")
-		req.Image2 = "0.jpg"
+		req.Image2 = "1.jpg"
 	} else {
 		req.Image2 = organization.Image2
 	}
 	if request.New3 != "" {
 		_, _, err = helpers.SaveImageToDiskByName(location, request.New3, "2")
-		req.Image3 = "0.jpg"
+		req.Image3 = "2.jpg"
 	} else {
 		req.Image3 = organization.Image3
 	}
 	if request.New4 != "" {
 		_, _, err = helpers.SaveImageToDiskByName(location, request.New4, "3")
-		req.Image4 = "0.jpg"
+		req.Image4 = "3.jpg"
 	} else {
 		req.Image4 = organization.Image4
 	}
