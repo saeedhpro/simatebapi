@@ -459,7 +459,7 @@ func AddAppointmentResults(appointment *models.AppointmentModel) (bool, error) {
 func CreateAppointmentAppCode(appointment *models.AppointmentModel) (bool, error) {
 	err := repository.DB.MySQL.
 		Model(&appointment).
-		Updates(&appointment).
+		Update("appcode", appointment.Appcode).
 		Error
 	if err != nil {
 		return false, err
