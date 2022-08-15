@@ -380,7 +380,11 @@ func AcceptedAppointment(appointment *models.AppointmentModel) (bool, error) {
 func CanceledAppointment(appointment *models.AppointmentModel) (bool, error) {
 	err := repository.DB.MySQL.
 		Model(&appointment).
-		Updates(&appointment).
+		UpdateColumns(map[string]interface{}{
+			"p_admission_at": appointment.PAdmissionAt,
+			"l_admission_at": appointment.LAdmissionAt,
+			"r_admission_at": appointment.RAdmissionAt,
+		}).
 		Error
 	if err != nil {
 		return false, err

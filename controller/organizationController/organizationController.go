@@ -50,18 +50,18 @@ func (o *OrganizationControllerStruct) Get(c *gin.Context) {
 	}
 	route := fmt.Sprintf("img/org/%d/%s.jpg", response.ID, response.Logo)
 	response.Logo = fmt.Sprintf("http://%s/%s", c.Request.Host, route)
-	if response.Image1 != "" {
-		response.Image1 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image1)
-	}
-	if response.Image2 != "" {
-		response.Image2 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image2)
-	}
-	if response.Image3 != "" {
-		response.Image3 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image3)
-	}
-	if response.Image4 != "" {
-		response.Image4 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image4)
-	}
+	//if response.Image1 != "" {
+	//	response.Image1 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image1)
+	//}
+	//if response.Image2 != "" {
+	//	response.Image2 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image2)
+	//}
+	//if response.Image3 != "" {
+	//	response.Image3 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image3)
+	//}
+	//if response.Image4 != "" {
+	//	response.Image4 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image4)
+	//}
 	c.JSON(200, response)
 }
 
