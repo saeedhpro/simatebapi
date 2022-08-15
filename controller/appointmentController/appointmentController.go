@@ -7,6 +7,7 @@ import (
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers"
+	appointment2 "github.com/saeedhpro/apisimateb/helpers/appointment"
 	"github.com/saeedhpro/apisimateb/helpers/token"
 	"github.com/saeedhpro/apisimateb/repository"
 	"github.com/saeedhpro/apisimateb/repository/appointmentRepository"
@@ -62,6 +63,7 @@ func (u *AppointmentControllerStruct) CreateAppointment(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
+	appointment2.SendAppointmentCreatedSMS(&request, appointment)
 	c.JSON(200, &appointment)
 	return
 }

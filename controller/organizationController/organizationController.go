@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
+	"github.com/saeedhpro/apisimateb/domain/responses"
 	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/token"
 	"github.com/saeedhpro/apisimateb/repository/holidayRepository"
@@ -21,12 +22,14 @@ import (
 
 type OrganizationControllerInterface interface {
 	Get(c *gin.Context)
+	GetOrganizationWorkHour(c *gin.Context)
 	GetOrganizationByType(c *gin.Context)
 	GetHolidays(c *gin.Context)
 	CreateHoliday(c *gin.Context)
 	UpdateHoliday(c *gin.Context)
 	DeleteHoliday(c *gin.Context)
 	UpdateOrganizationAbout(c *gin.Context)
+	UpdateOrganizationWorkHour(c *gin.Context)
 }
 
 type OrganizationControllerStruct struct {
@@ -61,6 +64,17 @@ func (o *OrganizationControllerStruct) Get(c *gin.Context) {
 	}
 	if response.Image4 != "" {
 		response.Image4 = fmt.Sprintf("http://%s/img/about/%d/%s", c.Request.Host, response.ID, response.Image4)
+	}
+	c.JSON(200, response)
+}
+
+func (o *OrganizationControllerStruct) GetOrganizationWorkHour(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, _ := organizationRepository.GetOrganizationByID(uint64(id))
+	response := responses.OrganizationWorkHour{
+		OrganizationID: organization.ID,
+		Start:          organization.WorkHourStart,
+		End:            organization.WorkHourEnd,
 	}
 	c.JSON(200, response)
 }
@@ -241,6 +255,18 @@ func (o *OrganizationControllerStruct) UpdateOrganizationAbout(c *gin.Context) {
 		req.Text4 = request.Text4
 	}
 	_ = organizationRepository.UpdateOrganizationAbout(uint64(id), &req)
+	c.JSON(200, true)
+	return
+}
+
+func (o *OrganizationControllerStruct) UpdateOrganizationWorkHour(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var request requests.UpdateOrganizationWorkHour
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(422, err.Error())
+		return
+	}
+	_ = organizationRepository.UpdateOrganizationWorkHour(uint64(id), request.Start, request.End)
 	c.JSON(200, true)
 	return
 }

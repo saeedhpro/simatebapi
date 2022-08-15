@@ -48,6 +48,11 @@ type UpdateOrganizationAbout struct {
 	New4  string `json:"new4"`
 }
 
+type UpdateOrganizationWorkHour struct {
+	Start string `json:"start"`
+	End   string `json:"end"`
+}
+
 type UpdateOrganizationAboutNames struct {
 	Text1  string `json:"text1"`
 	Image1 string `json:"image1"`

@@ -212,6 +212,27 @@ func UpdateOrganizationAbout(id uint64, request *requests.UpdateOrganizationAbou
 	return nil
 }
 
+func UpdateOrganizationWorkHour(id uint64, start string, end string) error {
+	organization := models.OrganizationModel{
+		ID: id,
+	}
+	err := repository.DB.MySQL.
+		Model(&organization).
+		Where("id = ?", organization.ID).
+		UpdateColumns(map[string]interface{}{
+			"work_hour_start": start,
+			"work_hour_end":   end,
+		}).
+		Error
+	fmt.Println(start)
+	fmt.Println(end)
+	if err != nil {
+		fmt.Println(err.Error(), "err")
+		return err
+	}
+	return nil
+}
+
 func CreateOrganization(request *requests.CreateOrganizationRequest) (*models.OrganizationModel, error) {
 	created := time.Now()
 	organization := models.OrganizationModel{
