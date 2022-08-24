@@ -2,9 +2,11 @@ package userController
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
+	sms2 "github.com/saeedhpro/apisimateb/helpers/sms"
 	"github.com/saeedhpro/apisimateb/helpers/token"
 	"github.com/saeedhpro/apisimateb/repository"
 	"github.com/saeedhpro/apisimateb/repository/countyRepository"
@@ -14,6 +16,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"strconv"
+	"strings"
 )
 
 type UserControllerInterface interface {
@@ -184,13 +187,35 @@ func (u *UserControllerStruct) CreateUser(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
+	go sendRegisterSms(user)
 	c.JSON(200, &user)
 	return
 }
 
+func sendRegisterSms(u *models.UserModel) {
+	organization, _ := organizationRepository.GetOrganizationByID(u.OrganizationID)
+	gender := ""
+	if u.Gender != "" {
+		if strings.ToLower(u.Gender) == "male" {
+			gender = "آقای "
+		} else {
+			gender = "خانم "
+		}
+	}
+	sms := sms2.TemplateSMS{
+		Template: "Information",
+		Token:    organization.Phone,
+		Tokens: map[string]string{
+			"token20": fmt.Sprintf("%s %s %s", gender, u.Fname, u.Lname),
+			"token10": organization.Name,
+		},
+	}
+	sms.Send()
+}
+
 func (u *UserControllerStruct) UpdateUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	_, err := userRepository.GetUserByID(uint64(id))
+	user, err := userRepository.GetUserByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(404, "not found")
@@ -214,6 +239,9 @@ func (u *UserControllerStruct) UpdateUser(c *gin.Context) {
 		return
 	}
 	tx.Commit()
+	if user.Tel != request.Tel || strings.ToLower(user.Gender) != strings.ToLower(request.Tel) {
+		sendRegisterSms(user)
+	}
 	c.JSON(200, true)
 	return
 }

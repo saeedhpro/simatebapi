@@ -1,8 +1,6 @@
 package requests
 
 import (
-	"fmt"
-	"github.com/kavenegar/kavenegar-go"
 	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/sms"
 )
@@ -27,35 +25,4 @@ func (s *SendSMSRequest) SendSMS() (bool, *string, error) {
 	message := s.Msg
 	send, res, error := sms.SendByPackage(receptor, message)
 	return send, res, error
-}
-
-type SendTemplateSMS struct {
-	Token    string `json:"token"`
-	Token2   string `json:"token2"`
-	Token3   string `json:"token3"`
-	Receptor string `json:"receptor"`
-	Template string `json:"template"`
-}
-
-func (s *SendTemplateSMS) Send() (bool, *string, error) {
-	receptor := helpers.NormalizePhoneNumber(s.Receptor)
-	params := &kavenegar.VerifyLookupParam{
-		Token2: s.Token2,
-		Token3: s.Token3,
-	}
-	if res, err := sms.Kavenegar.Verify.Lookup(receptor, s.Template, s.Token, params); err != nil {
-		switch err := err.(type) {
-		case *kavenegar.APIError:
-			fmt.Println(err.Error())
-		case *kavenegar.HTTPError:
-			fmt.Println(err.Error())
-		default:
-			fmt.Println(err.Error())
-		}
-		return false, nil, err
-	} else {
-		fmt.Println("MessageID 	= ", res.MessageID)
-		fmt.Println("Status    	= ", res.Status)
-		return true, &res.Message, nil
-	}
 }

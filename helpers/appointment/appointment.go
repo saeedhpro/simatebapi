@@ -5,6 +5,7 @@ import (
 	"github.com/jalaali/go-jalaali"
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
+	sms2 "github.com/saeedhpro/apisimateb/helpers/sms"
 	"github.com/saeedhpro/apisimateb/repository/organizationRepository"
 	"github.com/saeedhpro/apisimateb/repository/userRepository"
 	"strings"
@@ -22,14 +23,14 @@ func SendAppointmentCreatedSMS(request *requests.AppointmentCreateRequest, appoi
 			date = ""
 		}
 		dateStr := fmt.Sprintf("%s %s", GetPersianDay(jalaali.From(t).Weekday().String()), date)
-		sms := requests.SendTemplateSMS{
+		sms := sms2.TemplateSMS{
 			Receptor: user.Tel,
 			Template: "reserve",
 			Token:    strings.Split(request.StartAt, " ")[1],
 			Token3:   organization.Name,
 			Token2:   dateStr,
 		}
-		sms.Send()
+		go sms.Send()
 	} else {
 		fmt.Println(err.Error())
 	}
@@ -38,14 +39,14 @@ func SendAppointmentCreatedSMS(request *requests.AppointmentCreateRequest, appoi
 func SendFileSentSMS(appointment *models.AppointmentModel) {
 	user, _ := userRepository.GetUserByID(appointment.UserID)
 	organization, _ := organizationRepository.GetOrganizationByID(appointment.OrganizationID)
-	sms := requests.SendTemplateSMS{
+	sms := sms2.TemplateSMS{
 		Receptor: user.Tel,
 		Template: "filesend",
 		Token:    user.Tel,
 		Token3:   organization.Name,
 		Token2:   appointment.Appcode,
 	}
-	sms.Send()
+	go sms.Send()
 }
 
 func GetPersianDay(day string) string {
