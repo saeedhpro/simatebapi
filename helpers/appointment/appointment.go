@@ -53,7 +53,7 @@ func SendAppointmentCodeSMS(appointment *models.AppointmentModel) {
 			dateStr := fmt.Sprintf("%s %s", GetPersianDay(jalaali.From(t).Weekday().String()), date)
 			sms := sms2.TemplateSMS{
 				Receptor: user.Tel,
-				Template: "Reservation",
+				Template: "APPOINTMENT",
 				Token:    appointment.Code,
 				Token2:   strings.Split(appointment.StartAt, " ")[1],
 				Tokens: map[string]string{
@@ -67,17 +67,15 @@ func SendAppointmentCodeSMS(appointment *models.AppointmentModel) {
 	}
 }
 
-func SendFileSentSMS(appointment *models.AppointmentModel) {
-	user, _ := userRepository.GetUserByID(appointment.UserID)
-	organization, _ := organizationRepository.GetOrganizationByID(appointment.OrganizationID)
+func SendUserFileSMS(organizationName string, tel string, password string) {
 	sms := sms2.TemplateSMS{
-		Receptor: user.Tel,
+		Receptor: tel,
 		Template: "filesend",
-		Token:    user.Tel,
-		Token3:   organization.Name,
-		Token2:   appointment.Appcode,
+		Token:    tel,
+		Token2:   password,
+		Token3:   organizationName,
 	}
-	go sms.Send()
+	sms.Send()
 }
 
 func GetPersianDay(day string) string {
