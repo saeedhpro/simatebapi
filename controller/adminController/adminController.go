@@ -9,6 +9,7 @@ import (
 	"github.com/saeedhpro/apisimateb/domain/responses"
 	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/token"
+	user2 "github.com/saeedhpro/apisimateb/helpers/user"
 	"github.com/saeedhpro/apisimateb/repository"
 	"github.com/saeedhpro/apisimateb/repository/groupRepository"
 	"github.com/saeedhpro/apisimateb/repository/holidayRepository"
@@ -112,6 +113,7 @@ func (a *AdminControllerStruct) CreateUser(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
+	go user2.SendRegisterSms(user)
 	c.JSON(200, &user)
 	return
 }

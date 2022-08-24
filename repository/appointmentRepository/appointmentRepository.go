@@ -12,7 +12,13 @@ import (
 
 func GetAppointmentBy(conditions *models.AppointmentModel) (*models.AppointmentModel, error) {
 	var appointment models.AppointmentModel
-	err := repository.DB.MySQL.Preload("Organization").Preload("Photography").Preload("Radiology").Preload("Staff").Preload("User").First(&appointment, &conditions).Error
+	err := repository.DB.MySQL.
+		Preload("Organization").
+		Preload("Photography").
+		Preload("Radiology").
+		Preload("Staff").
+		Preload("User").
+		First(&appointment, &conditions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -460,6 +466,17 @@ func CreateAppointmentAppCode(appointment *models.AppointmentModel) (bool, error
 	err := repository.DB.MySQL.
 		Model(&appointment).
 		Update("appcode", appointment.Appcode).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func CreateAppointmentCode(appointment *models.AppointmentModel) (bool, error) {
+	err := repository.DB.MySQL.
+		Model(&appointment).
+		Update("code", appointment.Code).
 		Error
 	if err != nil {
 		return false, err

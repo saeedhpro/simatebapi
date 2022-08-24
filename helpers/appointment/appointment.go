@@ -41,21 +41,26 @@ func SendAppointmentCreatedSMS(request *requests.AppointmentCreateRequest, appoi
 }
 
 func SendAppointmentCodeSMS(appointment *models.AppointmentModel) {
-	t, err := time.Parse("2006-01-02 15:04:05", appointment.StartAt)
+	t, err := time.Parse(time.RFC3339Nano, appointment.StartAt)
 	if time.Now().Before(t) {
-		user, _ := userRepository.GetUserByID(appointment.UserID)
 		if err == nil {
+			user, _ := userRepository.GetUserByID(appointment.UserID)
 			date, err1 := jalaali.From(t).JFormat("2006 Jan 02")
 			if err1 != nil {
 				fmt.Println(err1.Error())
 				date = ""
+			}
+			tm, err1 := jalaali.From(t).JFormat("15:04:05")
+			if err1 != nil {
+				fmt.Println(err1.Error())
+				tm = ""
 			}
 			dateStr := fmt.Sprintf("%s %s", GetPersianDay(jalaali.From(t).Weekday().String()), date)
 			sms := sms2.TemplateSMS{
 				Receptor: user.Tel,
 				Template: "APPOINTMENT",
 				Token:    appointment.Code,
-				Token2:   strings.Split(appointment.StartAt, " ")[1],
+				Token2:   tm,
 				Tokens: map[string]string{
 					"token20": dateStr,
 				},
@@ -64,6 +69,8 @@ func SendAppointmentCodeSMS(appointment *models.AppointmentModel) {
 		} else {
 			fmt.Println(err.Error())
 		}
+	} else {
+		fmt.Println(time.Now().After(t))
 	}
 }
 

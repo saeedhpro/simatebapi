@@ -8,6 +8,7 @@ import (
 	"github.com/saeedhpro/apisimateb/domain/models"
 	"github.com/saeedhpro/apisimateb/domain/requests"
 	"github.com/saeedhpro/apisimateb/helpers"
+	"github.com/saeedhpro/apisimateb/helpers/appointment"
 	"github.com/saeedhpro/apisimateb/helpers/token"
 	"github.com/saeedhpro/apisimateb/repository"
 	"github.com/saeedhpro/apisimateb/repository/fileRepository"
@@ -84,6 +85,7 @@ func (f FileControllerStruct) CreateFile(c *gin.Context) {
 	_ = repository.DB.MySQL.Find(&user, &user).Error
 	file.Staff = user
 	file.Path = fmt.Sprintf("http://%s/file/%s/1.%s", c.Request.Host, file.Path, file.Ext)
+	go appointment.SendUserFileSMS(organization.Name, user.Tel, user.Pass)
 	c.JSON(200, response)
 	return
 }

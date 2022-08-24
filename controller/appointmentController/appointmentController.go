@@ -690,14 +690,14 @@ func (u *AppointmentControllerStruct) CreateAppointmentCode(c *gin.Context) {
 	}
 	appointment.Code = rand
 	tx := repository.DB.MySQL.Begin()
-	_, err = appointmentRepository.CreateAppointmentAppCode(appointment)
+	_, err = appointmentRepository.CreateAppointmentCode(appointment)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(500, err.Error())
 		return
 	}
 	tx.Commit()
-	go appointment2.SendAppointmentCodeSMS(appointment)
+	appointment2.SendAppointmentCodeSMS(appointment)
 	c.JSON(200, rand)
 	return
 }
