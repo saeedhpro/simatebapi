@@ -13,26 +13,30 @@ import (
 )
 
 func SendAppointmentCreatedSMS(request *requests.AppointmentCreateRequest, appointment *models.AppointmentModel) {
-	user, _ := userRepository.GetUserByID(request.UserID)
-	organization, _ := organizationRepository.GetOrganizationByID(appointment.OrganizationID)
 	t, err := time.Parse("2006-01-02 15:04:05", request.StartAt)
-	if err == nil {
-		date, err1 := jalaali.From(t).JFormat("2006 Jan 02")
-		if err1 != nil {
-			fmt.Println(err1.Error())
-			date = ""
+	if time.Now().Before(t) {
+		user, _ := userRepository.GetUserByID(request.UserID)
+		organization, _ := organizationRepository.GetOrganizationByID(appointment.OrganizationID)
+		if err == nil {
+			date, err1 := jalaali.From(t).JFormat("2006 Jan 02")
+			if err1 != nil {
+				fmt.Println(err1.Error())
+				date = ""
+			}
+			dateStr := fmt.Sprintf("%s %s", GetPersianDay(jalaali.From(t).Weekday().String()), date)
+			sms := sms2.TemplateSMS{
+				Receptor: user.Tel,
+				Template: "Reservation",
+				Token:    strings.Split(request.StartAt, " ")[1],
+				Tokens: map[string]string{
+					"token10": organization.Name,
+					"token20": dateStr,
+				},
+			}
+			sms.Send()
+		} else {
+			fmt.Println(err.Error())
 		}
-		dateStr := fmt.Sprintf("%s %s", GetPersianDay(jalaali.From(t).Weekday().String()), date)
-		sms := sms2.TemplateSMS{
-			Receptor: user.Tel,
-			Template: "reserve",
-			Token:    strings.Split(request.StartAt, " ")[1],
-			Token3:   organization.Name,
-			Token2:   dateStr,
-		}
-		go sms.Send()
-	} else {
-		fmt.Println(err.Error())
 	}
 }
 

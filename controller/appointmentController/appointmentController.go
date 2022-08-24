@@ -40,6 +40,7 @@ type AppointmentControllerInterface interface {
 	DeleteAppointments(c *gin.Context)
 	AddAppointmentResults(c *gin.Context)
 	CreateAppointmentAppCode(c *gin.Context)
+	CreateAppointmentCode(c *gin.Context)
 }
 
 type AppointmentControllerStruct struct {
@@ -63,7 +64,7 @@ func (u *AppointmentControllerStruct) CreateAppointment(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
-	appointment2.SendAppointmentCreatedSMS(&request, appointment)
+	go appointment2.SendAppointmentCreatedSMS(&request, appointment)
 	c.JSON(200, &appointment)
 	return
 }
@@ -655,6 +656,38 @@ func (u *AppointmentControllerStruct) CreateAppointmentAppCode(c *gin.Context) {
 		return
 	}
 	tx.Commit()
+	c.JSON(200, rand)
+	return
+}
+
+func (u *AppointmentControllerStruct) CreateAppointmentCode(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	organization, err := organizationRepository.GetOrganizationByID(token.GetStaffUser(c).OrganizationID)
+	if err != nil {
+		c.JSON(500, "get staff organization error")
+		return
+	}
+	appointment, err := appointmentRepository.GetAppointmentByID(uint64(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, "appointment not found")
+			return
+		}
+		c.JSON(500, err.Error())
+		return
+	}
+	if !appointment.CanUpdate(organization) {
+		c.JSON(403, "access denied")
+		return
+	}
+	rand := helpers.RandomIntString(6)
+	for {
+		app, _ := appointmentRepository.GetAppointmentBy(&models.AppointmentModel{Code: rand})
+		if app == nil {
+			break
+		}
+		rand = helpers.RandomIntString(6)
+	}
 	c.JSON(200, rand)
 	return
 }

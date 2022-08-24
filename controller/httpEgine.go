@@ -107,7 +107,8 @@ func Run(Port string) {
 		appointments.POST("/:id/cancel", middleware.GinJwtAuth(appointmentCont.CancelAppointment, true, false))
 		appointments.POST("/:id/reserve", middleware.GinJwtAuth(appointmentCont.ReserveAppointment, true, false))
 		appointments.POST("/:id/result", middleware.GinJwtAuth(appointmentCont.AddAppointmentResults, true, false))
-		appointments.POST("/:id/code", middleware.GinJwtAuth(appointmentCont.CreateAppointmentAppCode, true, false))
+		appointments.POST("/:id/appcode", middleware.GinJwtAuth(appointmentCont.CreateAppointmentAppCode, true, false))
+		appointments.POST("/:id/code", middleware.GinJwtAuth(appointmentCont.CreateAppointmentCode, true, false))
 	}
 	{
 		v1.POST("/files", middleware.GinJwtAuth(fileCont.CreateFile, true, false))
