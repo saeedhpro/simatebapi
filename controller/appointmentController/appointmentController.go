@@ -201,6 +201,7 @@ func (u *AppointmentControllerStruct) FilterOrganizationAppointment(c *gin.Conte
 		limit = 10
 	}
 	response, _ := appointmentRepository.FilterOrganizationAppointment(organization.ID, statues, q, start, end, organization.IsDoctor(), page, limit)
+	fmt.Println(response.Data.([]models.AppointmentModel)[0])
 	c.JSON(200, response)
 }
 
