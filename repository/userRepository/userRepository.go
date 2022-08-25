@@ -76,13 +76,18 @@ func GetLastOnlinePatients() ([]models.UserModel, error) {
 
 func GetOrganizationUserListBy(conditions *models.UserModel, q string, organization *models.OrganizationModel) ([]models.UserModel, error) {
 	users := []models.UserModel{}
-	query := repository.DB.MySQL.Preload("Organization").Preload("Staff").Preload("UserGroup")
+	query := repository.DB.MySQL.
+		Preload("Organization").
+		Preload("Staff").
+		Preload("UserGroup")
 	if q != "" {
 		query = query.Where(repository.DB.MySQL.
 			Where("fname LIKE ?", "%"+q+"%").
 			Or("lname LIKE ?", "%"+q+"%").
 			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
+	query = query.
+		Order("created desc")
 	err := query.Find(&users, &conditions).Error
 	if err != nil {
 		return nil, err
@@ -121,6 +126,8 @@ func GetPaginatedOrganizationUserListBy(conditions *models.UserModel, q string, 
 		}
 		query = query.Where("id in (?)", q2.Select("user_id"))
 	}
+	query = query.
+		Order("created desc")
 	query.Find(&users, &conditions).Count(&count)
 	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Staff").Preload("UserGroup")
 	if q != "" {
@@ -140,6 +147,8 @@ func GetPaginatedOrganizationUserListBy(conditions *models.UserModel, q string, 
 		}
 		query = query.Where("id in (?)", q2.Select("user_id"))
 	}
+	query = query.
+		Order("created desc")
 	err := query.Find(&users, &conditions).Error
 	if err != nil {
 		return paginate, err
@@ -163,6 +172,8 @@ func GetUserListBy(conditions *models.UserModel, q string) ([]models.UserModel, 
 			Or("lname LIKE ?", "%"+q+"%").
 			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
+	query = query.
+		Order("created desc")
 	err := query.Find(&users, &conditions).Error
 	if err != nil {
 		return nil, err
@@ -190,6 +201,8 @@ func GetPaginatedUserListBy(conditions *models.UserModel, q string, page int, li
 			Or("lname LIKE ?", "%"+q+"%").
 			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
+	query = query.
+		Order("created desc")
 	query.Find(&users, &conditions).Count(&count)
 	query = repository.DB.MySQL.Scopes(pagination.PaginateScope(count, &paginate)).Preload("Organization").Preload("Staff").Preload("UserGroup")
 	if q != "" {
@@ -198,6 +211,8 @@ func GetPaginatedUserListBy(conditions *models.UserModel, q string, page int, li
 			Or("lname LIKE ?", "%"+q+"%").
 			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
+	query = query.
+		Order("created desc")
 	err := query.Find(&users, &conditions).Error
 	if err != nil {
 		return paginate, err
