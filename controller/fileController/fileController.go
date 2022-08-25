@@ -86,7 +86,7 @@ func (f FileControllerStruct) CreateFile(c *gin.Context) {
 	_ = repository.DB.MySQL.Find(&user, &user).Error
 	file.Staff = user
 	file.Path = fmt.Sprintf("http://%s/file/%s/1.%s", c.Request.Host, file.Path, file.Ext)
-	newPass := helpers.RandomString(8)
+	newPass := helpers.RandomIntString(8)
 	pass, _ := helpers.PasswordHash(newPass)
 	user.Pass = pass
 	userRepository.UpdateUserPass(&user)
