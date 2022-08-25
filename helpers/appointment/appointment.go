@@ -80,7 +80,9 @@ func SendUserFileSMS(organizationName string, tel string, password string) {
 		Template: "filesend",
 		Token:    tel,
 		Token2:   password,
-		Token3:   organizationName,
+		Tokens: map[string]string{
+			"token20": organizationName,
+		},
 	}
 	sms.Send()
 }

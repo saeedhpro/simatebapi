@@ -372,3 +372,16 @@ func UpdateUser(request *requests.UserUpdateRequest) error {
 	}
 	return nil
 }
+func UpdateUserPass(user *models.UserModel) error {
+	err := repository.DB.MySQL.
+		Model(&user).
+		Where("id = ?", user.ID).
+		Update("pass", user.Pass).
+		Error
+	fmt.Println(user.ID)
+	if err != nil {
+		fmt.Println(err.Error(), "err")
+		return err
+	}
+	return nil
+}

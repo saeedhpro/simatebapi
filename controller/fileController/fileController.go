@@ -12,6 +12,7 @@ import (
 	"github.com/saeedhpro/apisimateb/helpers/token"
 	"github.com/saeedhpro/apisimateb/repository"
 	"github.com/saeedhpro/apisimateb/repository/fileRepository"
+	"github.com/saeedhpro/apisimateb/repository/userRepository"
 	"io/ioutil"
 	"log"
 	"os"
@@ -85,7 +86,11 @@ func (f FileControllerStruct) CreateFile(c *gin.Context) {
 	_ = repository.DB.MySQL.Find(&user, &user).Error
 	file.Staff = user
 	file.Path = fmt.Sprintf("http://%s/file/%s/1.%s", c.Request.Host, file.Path, file.Ext)
-	go appointment.SendUserFileSMS(organization.Name, user.Tel, user.Pass)
+	newPass := helpers.RandomString(8)
+	pass, _ := helpers.PasswordHash(newPass)
+	user.Pass = pass
+	userRepository.UpdateUserPass(&user)
+	go appointment.SendUserFileSMS("فوتوگرافی سیماطب", user.Tel, newPass)
 	c.JSON(200, response)
 	return
 }
@@ -137,7 +142,6 @@ func saveFileToDisk(location string, data string, ext string) (string, string, e
 	}
 	for {
 		name = helpers.RandomString(8)
-		fmt.Println(fmt.Sprintf("%s", name), "location")
 		if !helpers.ItemExists(names, fmt.Sprintf("%s", name)) {
 			err = os.MkdirAll(fmt.Sprintf("%s/%s", location, name), os.ModePerm)
 			if err != nil {

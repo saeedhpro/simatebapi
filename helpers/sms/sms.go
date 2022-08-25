@@ -20,7 +20,7 @@ func init() {
 }
 
 func SendByPackage(receptor []string, message string) (bool, *string, error) {
-	if res, err := Kavenegar.Message.Send(Sender, receptor, message, nil); err != nil {
+	if _, err := Kavenegar.Message.Send(Sender, receptor, message, nil); err != nil {
 		switch err := err.(type) {
 		case *kavenegar.APIError:
 			log.Println(err.Error())
@@ -35,10 +35,8 @@ func SendByPackage(receptor []string, message string) (bool, *string, error) {
 		r := err.Error()
 		return false, &r, err
 	} else {
-		for _, r := range res {
-			log.Println("MessageID 	= ", r.MessageID)
-			log.Println("Status    	= ", r.Status)
-		}
+		//for _, r := range res {
+		//}
 		return true, nil, nil
 	}
 }
