@@ -454,7 +454,14 @@ func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 func AddAppointmentResults(appointment *models.AppointmentModel) (bool, error) {
 	err := repository.DB.MySQL.
 		Model(&appointment).
-		Updates(&appointment).
+		UpdateColumns(map[string]interface{}{
+			"p_result_at": appointment.PResultAt,
+			"l_result_at": appointment.LResultAt,
+			"r_result_at": appointment.RResultAt,
+			"p_rnd_img":   appointment.PRndImg,
+			"l_rnd_img":   appointment.LRndImg,
+			"r_rnd_img":   appointment.RRndImg,
+		}).
 		Error
 	if err != nil {
 		return false, err

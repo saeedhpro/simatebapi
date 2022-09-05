@@ -168,18 +168,57 @@ func (u *AppointmentControllerStruct) GetAppointmentResults(c *gin.Context) {
 			rnd = appointment.LRndImg
 		}
 	}
-	route := fmt.Sprintf("img/result/%d/%s", appointment.ID, rnd)
-	files, err := ioutil.ReadDir(fmt.Sprintf("./res/%s", route))
-	if err != nil {
-		fmt.Println("read files", err.Error())
-		c.JSON(200, results)
-		return
-	}
-	for _, f := range files {
-		results = append(results, fmt.Sprintf("http://%s/%s/%s", c.Request.Host, route, f.Name()))
+	if staffOrg.IsDoctor() {
+		rnd = appointment.PRndImg
+		if rnd != "" {
+			results, err = getFiles(c.Request.Host, appointment.ID, rnd)
+			if err != nil {
+				fmt.Println("read files", err.Error())
+				c.JSON(200, results)
+				return
+			}
+		}
+		rnd = appointment.RRndImg
+		if rnd != "" {
+			results, err = getFiles(c.Request.Host, appointment.ID, rnd)
+			if err != nil {
+				fmt.Println("read files", err.Error())
+				c.JSON(200, results)
+				return
+			}
+		}
+		rnd = appointment.LRndImg
+		if rnd != "" {
+			results, err = getFiles(c.Request.Host, appointment.ID, rnd)
+			if err != nil {
+				fmt.Println("read files", err.Error())
+				c.JSON(200, results)
+				return
+			}
+		}
+	} else {
+		results, err = getFiles(c.Request.Host, appointment.ID, rnd)
+		if err != nil {
+			fmt.Println("read files", err.Error())
+			c.JSON(200, results)
+			return
+		}
 	}
 	c.JSON(200, results)
 	return
+}
+
+func getFiles(host string, appointmentId uint64, rnd string) ([]string, error) {
+	var results []string
+	route := fmt.Sprintf("img/result/%d/%s", appointmentId, rnd)
+	files, err := ioutil.ReadDir(fmt.Sprintf("./res/%s", route))
+	if err != nil {
+		return results, err
+	}
+	for _, f := range files {
+		results = append(results, fmt.Sprintf("http://%s/%s/%s", host, route, f.Name()))
+	}
+	return results, err
 }
 
 func (u *AppointmentControllerStruct) FilterOrganizationAppointment(c *gin.Context) {
@@ -201,7 +240,6 @@ func (u *AppointmentControllerStruct) FilterOrganizationAppointment(c *gin.Conte
 		limit = 10
 	}
 	response, _ := appointmentRepository.FilterOrganizationAppointment(organization.ID, statues, q, start, end, organization.IsDoctor(), page, limit)
-	fmt.Println(response.Data.([]models.AppointmentModel)[0])
 	c.JSON(200, response)
 }
 
@@ -396,6 +434,7 @@ func (u *AppointmentControllerStruct) AcceptedAppointment(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
+	appointment2.SendAppointmentCodeSMS(appointment)
 	c.JSON(200, response)
 	return
 }

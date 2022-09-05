@@ -18,7 +18,7 @@ func SendAppointmentCreatedSMS(request *requests.AppointmentCreateRequest, appoi
 		user, _ := userRepository.GetUserByID(request.UserID)
 		organization, _ := organizationRepository.GetOrganizationByID(appointment.OrganizationID)
 		if err == nil {
-			date, err1 := jalaali.From(t).JFormat("2006 Jan 02")
+			date, err1 := jalaali.From(t).JFormat("02 Jan")
 			if err1 != nil {
 				fmt.Println(err1.Error())
 				date = ""
