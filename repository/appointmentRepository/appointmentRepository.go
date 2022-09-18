@@ -403,6 +403,7 @@ func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	appointment.ID = request.ID
 	appointment.Status = request.Status
 	appointment.Info = request.Info
+	appointment.UserID = request.UserID
 	appointment.LaboratoryCases = request.LaboratoryCases
 	appointment.PhotographyCases = request.PhotographyCases
 	appointment.RadiologyCases = request.RadiologyCases
