@@ -22,11 +22,11 @@ func Init() {
 	host := env.GetEnv("HOST")
 	port, _ := strconv.Atoi(env.GetEnv("DBPORT"))
 	schema := env.GetEnv("SCHEMA")
-	fmt.Println(username)
-	fmt.Println(password)
-	fmt.Println(username)
+	username = "root"
+	port = 3306
+	schema = "appdoctor"
+	password = ""
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=UTC", username, password, host, port, schema)
-	fmt.Println(dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
