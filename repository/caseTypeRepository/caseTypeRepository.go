@@ -65,7 +65,7 @@ func CreateCaseType(request *requests.CreateCaseTypeRequest) error {
 		IsLimited:      IsLimited,
 		Limitation:     request.Limitation,
 	}
-	err := repository.DB.MySQL.Create(caseType).Error
+	err := repository.DB.MySQL.Create(&caseType).Error
 	if err != nil {
 		return err
 	}

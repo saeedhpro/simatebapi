@@ -83,7 +83,7 @@ func GetPaginatedHolidayListBy(conditions *models.HolidayModel, q string, startD
 }
 
 func CreateHoliday(holiday *models.HolidayModel) error {
-	return repository.DB.MySQL.Create(holiday).Error
+	return repository.DB.MySQL.Create(&holiday).Error
 }
 
 func UpdateHoliday(holiday *models.HolidayModel) error {

@@ -55,7 +55,7 @@ func CreateUserMedicalHistory(request *requests.CreateUserMedicalHistoryRequest)
 		LengthActiveTreatment:   request.LengthActiveTreatment,
 		Retention:               request.Retention,
 	}
-	err := repository.DB.MySQL.Create(history).Error
+	err := repository.DB.MySQL.Create(&history).Error
 	if err != nil {
 		return err
 	}
