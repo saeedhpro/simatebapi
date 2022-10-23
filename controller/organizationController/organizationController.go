@@ -29,6 +29,7 @@ type OrganizationControllerInterface interface {
 	UpdateHoliday(c *gin.Context)
 	DeleteHoliday(c *gin.Context)
 	UpdateOrganizationAbout(c *gin.Context)
+	UpdateOrganizationCases(c *gin.Context)
 	UpdateOrganizationWorkHour(c *gin.Context)
 }
 
@@ -255,6 +256,18 @@ func (o *OrganizationControllerStruct) UpdateOrganizationAbout(c *gin.Context) {
 		req.Text4 = request.Text4
 	}
 	_ = organizationRepository.UpdateOrganizationAbout(uint64(id), &req)
+	c.JSON(200, true)
+	return
+}
+
+func (o *OrganizationControllerStruct) UpdateOrganizationCases(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var request requests.UpdateOrganizationCases
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(422, err.Error())
+		return
+	}
+	_ = organizationRepository.UpdateOrganizationCases(uint64(id), request.Cases)
 	c.JSON(200, true)
 	return
 }

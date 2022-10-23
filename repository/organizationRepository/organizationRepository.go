@@ -212,6 +212,23 @@ func UpdateOrganizationAbout(id uint64, request *requests.UpdateOrganizationAbou
 	return nil
 }
 
+func UpdateOrganizationCases(id uint64, cases string) error {
+	organization := models.OrganizationModel{
+		ID:        id,
+		CaseTypes: cases,
+	}
+	err := repository.DB.MySQL.
+		Model(&organization).
+		Where("id = ?", &organization.ID).
+		Updates(organization).
+		Error
+	if err != nil {
+		fmt.Println(err.Error(), "err")
+		return err
+	}
+	return nil
+}
+
 func UpdateOrganizationWorkHour(id uint64, start string, end string) error {
 	organization := models.OrganizationModel{
 		ID: id,
