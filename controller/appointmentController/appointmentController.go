@@ -641,7 +641,7 @@ func (u *AppointmentControllerStruct) AddAppointmentResults(c *gin.Context) {
 			if err != nil {
 				fmt.Println(err.Error(), "not exist")
 				if os.IsNotExist(err) {
-					err = os.MkdirAll(location, os.ModeDir)
+					err = os.MkdirAll(location, os.ModePerm)
 					if err != nil {
 						fmt.Println(err.Error(), "cant make")
 					}
