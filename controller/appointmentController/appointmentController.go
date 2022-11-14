@@ -639,10 +639,11 @@ func (u *AppointmentControllerStruct) AddAppointmentResults(c *gin.Context) {
 			location := fmt.Sprintf("./res/img/result/%d/%s", appointment.ID, rand)
 			files, err := ioutil.ReadDir(location)
 			if err != nil {
+				fmt.Println(err.Error(), "not exist")
 				if os.IsNotExist(err) {
-					err = os.MkdirAll(location, os.ModePerm)
+					err = os.MkdirAll(location, os.ModeDir)
 					if err != nil {
-						fmt.Println(err.Error())
+						fmt.Println(err.Error(), "cant make")
 					}
 				}
 			}
