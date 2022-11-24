@@ -86,14 +86,14 @@ func (u *UserControllerStruct) GetOrganizationUserList(c *gin.Context) {
 		filter.UserGroupID = uint64(userGroupID)
 	}
 	if page < 1 {
-		response, _ := userRepository.GetUserListBy(&filter, q)
+		response, _ := userRepository.GetUserListBy(&filter, q, []string{})
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := userRepository.GetPaginatedUserListBy(&filter, q, page, limit)
+	response, _ := userRepository.GetPaginatedUserListBy(&filter, q, []string{}, page, limit)
 	c.JSON(200, response)
 	return
 }
@@ -111,14 +111,14 @@ func (u *UserControllerStruct) GetOrganizationPatientList(c *gin.Context) {
 		filter.UserGroupID = uint64(userGroupID)
 	}
 	if page < 1 {
-		response, _ := userRepository.GetUserListBy(&filter, q)
+		response, _ := userRepository.GetUserListBy(&filter, q, []string{})
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	response, _ := userRepository.GetPaginatedUserListBy(&filter, q, page, limit)
+	response, _ := userRepository.GetPaginatedUserListBy(&filter, q, []string{}, page, limit)
 	c.JSON(200, response)
 	return
 }

@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -83,20 +84,25 @@ func (a *AdminControllerStruct) GetUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	userGroupID, _ := strconv.Atoi(c.Query("group"))
+	userGroups := c.Query("groups")
+	var userGroupIds []string
+	if len(userGroups) > 0 {
+		userGroupIds = strings.Split(userGroups, ",")
+	}
 	q := c.Query("q")
 	filter := models.UserModel{}
 	if userGroupID > 0 {
 		filter.UserGroupID = uint64(userGroupID)
 	}
 	if page < 1 {
-		response, _ := userRepository.GetUserListBy(&filter, q)
+		response, _ := userRepository.GetUserListBy(&filter, q, userGroupIds)
 		c.JSON(200, response)
 		return
 	}
 	if limit < 1 {
 		limit = 10
 	}
-	users, _ := userRepository.GetPaginatedUserListBy(&filter, q, page, limit)
+	users, _ := userRepository.GetPaginatedUserListBy(&filter, q, userGroupIds, page, limit)
 	c.JSON(200, users)
 }
 

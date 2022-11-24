@@ -7,6 +7,7 @@ import (
 	"github.com/saeedhpro/apisimateb/helpers"
 	"github.com/saeedhpro/apisimateb/helpers/pagination"
 	"github.com/saeedhpro/apisimateb/repository"
+	"strconv"
 	"time"
 )
 
@@ -163,7 +164,7 @@ func GetPaginatedOrganizationUserListBy(conditions *models.UserModel, q string, 
 	return paginate, nil
 }
 
-func GetUserListBy(conditions *models.UserModel, q string) ([]models.UserModel, error) {
+func GetUserListBy(conditions *models.UserModel, q string, userGroupIds []string) ([]models.UserModel, error) {
 	users := []models.UserModel{}
 	query := repository.DB.MySQL.Preload("Organization").Preload("Staff").Preload("UserGroup")
 	if q != "" {
@@ -171,6 +172,14 @@ func GetUserListBy(conditions *models.UserModel, q string) ([]models.UserModel, 
 			Where("fname LIKE ?", "%"+q+"%").
 			Or("lname LIKE ?", "%"+q+"%").
 			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
+	}
+	if len(userGroupIds) > 0 {
+		var ids []int
+		for i := 0; i < len(userGroupIds); i++ {
+			in, _ := strconv.Atoi(userGroupIds[i])
+			ids = append(ids, in)
+		}
+		query = query.Where("user_group_id in (?)", ids)
 	}
 	query = query.
 		Order("created desc")
@@ -187,7 +196,7 @@ func GetUserListBy(conditions *models.UserModel, q string) ([]models.UserModel, 
 	return users, nil
 }
 
-func GetPaginatedUserListBy(conditions *models.UserModel, q string, page int, limit int) (pagination.Pagination, error) {
+func GetPaginatedUserListBy(conditions *models.UserModel, q string, userGroupIds []string, page int, limit int) (pagination.Pagination, error) {
 	users := []models.UserModel{}
 	paginate := pagination.Pagination{
 		Page:  page,
@@ -201,6 +210,14 @@ func GetPaginatedUserListBy(conditions *models.UserModel, q string, page int, li
 			Or("lname LIKE ?", "%"+q+"%").
 			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
 	}
+	if len(userGroupIds) > 0 {
+		var ids []int
+		for i := 0; i < len(userGroupIds); i++ {
+			in, _ := strconv.Atoi(userGroupIds[i])
+			ids = append(ids, in)
+		}
+		query = query.Where("user_group_id in (?)", ids)
+	}
 	query = query.
 		Order("created desc")
 	query.Find(&users, &conditions).Count(&count)
@@ -210,6 +227,14 @@ func GetPaginatedUserListBy(conditions *models.UserModel, q string, page int, li
 			Where("fname LIKE ?", "%"+q+"%").
 			Or("lname LIKE ?", "%"+q+"%").
 			Or("Concat(Concat(`fname`, ' ' ),`lname`) LIKE ?", "%"+q+"%"))
+	}
+	if len(userGroupIds) > 0 {
+		var ids []int
+		for i := 0; i < len(userGroupIds); i++ {
+			in, _ := strconv.Atoi(userGroupIds[i])
+			ids = append(ids, in)
+		}
+		query = query.Where("user_group_id in (?)", ids)
 	}
 	query = query.
 		Order("created desc")
@@ -231,6 +256,7 @@ func GetUserByID(ID uint64) (*models.UserModel, error) {
 	user := models.UserModel{ID: ID}
 	err := repository.DB.MySQL.
 		Preload("Organization").
+		Preload("City").
 		Preload("Staff").
 		Preload("UserGroup").
 		First(&user, &user).
@@ -321,7 +347,8 @@ func CreateUser(request *requests.UserCreateRequest, staffID uint64, organizatio
 		pass, _ := helpers.PasswordHash(request.Pass)
 		user.Pass = pass
 	}
-	fmt.Println(user.OrganizationID)
+	fmt.Println(user.Pass, "u")
+	fmt.Println(request.Pass, "r")
 	err := repository.DB.MySQL.Create(&user).Error
 	if err != nil {
 		return nil, err
