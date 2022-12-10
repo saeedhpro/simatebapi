@@ -415,6 +415,7 @@ func UpdateAppointment(request *requests.AppointmentUpdateRequest) (bool, error)
 	appointment.LaboratoryID = request.LaboratoryID
 	appointment.PhotographyID = request.PhotographyID
 	appointment.RadiologyID = request.RadiologyID
+	appointment.StartAt = request.StartAt
 	if request.RResultAt != nil {
 		r, err := time.Parse("2006-01-02 15:04:05", *request.RResultAt)
 		if err != nil {

@@ -156,11 +156,8 @@ func UpdateOrganization(request *requests.CreateOrganizationRequest) error {
 		Website:       request.Website,
 		Instagram:     request.Instagram,
 		Text1:         request.Text1,
-		Image1:        request.Image1,
 		Text2:         request.Text2,
-		Image2:        request.Image2,
 		Text3:         request.Text3,
-		Image3:        request.Image3,
 	}
 	if request.CreatedAt != nil {
 		created := time.Time{}

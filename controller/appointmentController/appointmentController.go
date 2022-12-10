@@ -541,6 +541,7 @@ func (u *AppointmentControllerStruct) UpdateAppointment(c *gin.Context) {
 		}
 	}
 	response, err := appointmentRepository.UpdateAppointment(&request)
+	fmt.Println(response, "start at")
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
